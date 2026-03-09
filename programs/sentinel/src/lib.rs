@@ -1,7 +1,11 @@
+// ================================================================
+// Sentinel Protocol — North Architecture
 // Copyright (c) 2026 North Architecture. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-NorthArchitecture-SIL-1.0
-// Unauthorized use prohibited. See LICENSE for terms.
-// Contact: contact.northprotocol@proton.me
+// Repo original : github.com/NorthArchitecture/sentinel-engine
+// Ranger Earn Build-A-Bear Hackathon 2025 — usage limité.
+// Voir LICENSE.md pour conditions complètes.
+// ================================================================
 
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;

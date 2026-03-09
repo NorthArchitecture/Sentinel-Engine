@@ -1,0 +1,23 @@
+[package]
+name = "sentinel-adaptor"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "sentinel_adaptor"
+crate-type = ["cdylib", "lib"]
+
+[features]
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+no-entrypoint = []
+cpi = ["no-entrypoint"]
+no-idl = []
+no-log-ix-name = []
+anchor-debug = []
+
+[dependencies]
+anchor-lang = { version = "0.31.1", features = ["init-if-needed"] }
+anchor-spl = "0.31.1"
+solana-program = "=2.1.0"
+sentinel = { path = "../sentinel", features = ["cpi"] }
+

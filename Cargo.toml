@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "programs/sentinel",
+    "programs/sentinel-adaptor",
 ]
 resolver = "2"
 

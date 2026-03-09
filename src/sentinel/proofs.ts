@@ -2,17 +2,17 @@
 // Sentinel Protocol — North Architecture
 // Copyright (c) 2026 North Architecture. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-NorthArchitecture-SIL-1.0
-// Repo original : github.com/NorthArchitecture/sentinel-engine
-// Ranger Earn Build-A-Bear Hackathon 2025 — usage limité.
-// Voir LICENSE.md pour conditions complètes.
+// Original repo: github.com/NorthArchitecture/sentinel-engine
+// Ranger Earn Build-A-Bear Hackathon 2025 — limited use.
+// See LICENSE.md for full terms.
 // ================================================================
 
 /**
- * Types d’inputs ZK alignés sur les signatures Rust de
- * `sentinel::deposit` et `sentinel::confidential_transfer`.
+ * ZK input types aligned with Rust signatures for
+ * `sentinel::deposit` and `sentinel::confidential_transfer`.
  *
- * Ce fichier ne génère pas encore les preuves Groth16 ; il
- * formalise uniquement la forme des données côté client.
+ * This file does not yet generate Groth16 proofs; it
+ * only formalizes the client-side data shape.
  */
 
 export const GROTH16_PROOF_SIZE = 256;
@@ -20,10 +20,10 @@ export const COMMITMENT_SIZE = 32;
 export const NULLIFIER_HASH_SIZE = 32;
 export const ENCRYPTED_BALANCE_SIZE = 64;
 
-export type Groth16ProofBytes = Uint8Array; // longueur attendue : 256
-export type Commitment = Uint8Array; // longueur attendue : 32
-export type NullifierHash = Uint8Array; // longueur attendue : 32
-export type EncryptedBalance = Uint8Array; // longueur attendue : 64
+export type Groth16ProofBytes = Uint8Array; // expected length: 256
+export type Commitment = Uint8Array; // expected length: 32
+export type NullifierHash = Uint8Array; // expected length: 32
+export type EncryptedBalance = Uint8Array; // expected length: 64
 
 export type U64 = bigint;
 

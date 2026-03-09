@@ -2,16 +2,16 @@
 // Sentinel Protocol — North Architecture
 // Copyright (c) 2026 North Architecture. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-NorthArchitecture-SIL-1.0
-// Repo original : github.com/NorthArchitecture/sentinel-engine
-// Ranger Earn Build-A-Bear Hackathon 2025 — usage limité.
-// Voir LICENSE.md pour conditions complètes.
+// Original repo: github.com/NorthArchitecture/sentinel-engine
+// Ranger Earn Build-A-Bear Hackathon 2025 — limited use.
+// See LICENSE.md for full terms.
 // ================================================================
 
 /**
- * Moteur de stratégies :
- * - allocation lending (Kamino + Marginfi),
- * - allocation delta neutral (Drift),
- * - rebalance automatique en fonction de la volatilité.
+ * Strategy engine:
+ * - lending allocation (Kamino + Marginfi),
+ * - delta-neutral allocation (Drift),
+ * - automatic rebalance based on volatility.
  */
 
 import {
@@ -20,9 +20,9 @@ import {
 } from "../risk/engine";
 
 /**
- * Seuil de volatilité au-delà duquel on bascule en delta neutral.
- * 0.15 ~ 15 % de volatilité annualisée normalisée (interprétation dépendante
- * de la manière dont les returns sont fournis).
+ * Volatility threshold above which we switch to delta-neutral.
+ * 0.15 ~ 15% normalized annualized volatility (interpretation depends
+ * on how returns are supplied).
  */
 export const VOLATILITY_THRESHOLD = 0.15;
 
@@ -32,7 +32,7 @@ export type DeltaNeutralProtocol = "Drift";
 export interface LendingLeg {
   protocol: LendingProtocol;
   /**
-   * Poids de la jambe dans l’allocation totale (0–1).
+   * Weight of the leg in total allocation (0–1).
    */
   weight: number;
 }
@@ -46,7 +46,7 @@ export interface DeltaNeutralAllocationPlan {
   type: "delta-neutral";
   protocol: DeltaNeutralProtocol;
   /**
-   * Levier cible global de la stratégie (dimensionless).
+   * Target leverage for the strategy (dimensionless).
    */
   targetLeverage: number;
 }
@@ -56,8 +56,8 @@ export type StrategyAllocationPlan =
   | DeltaNeutralAllocationPlan;
 
 /**
- * Plan d’allocation lending simple : 50 % Kamino, 50 % Marginfi.
- * Les détails (marchés, collatéraux) sont gérés dans un niveau inférieur.
+ * Simple lending allocation plan: 50% Kamino, 50% Marginfi.
+ * Details (markets, collateral) are handled at a lower layer.
  */
 export function allocateLending(): LendingAllocationPlan {
   const legs: LendingLeg[] = [
@@ -72,8 +72,8 @@ export function allocateLending(): LendingAllocationPlan {
 }
 
 /**
- * Plan d’allocation delta neutral sur Drift.
- * La granularité (paires, tailles de positions) est gérée ailleurs.
+ * Delta-neutral allocation plan on Drift.
+ * Granularity (pairs, position sizes) is handled elsewhere.
  */
 export function allocateDeltaNeutral(): DeltaNeutralAllocationPlan {
   return {
@@ -85,8 +85,8 @@ export function allocateDeltaNeutral(): DeltaNeutralAllocationPlan {
 
 export interface RebalanceInputs {
   /**
-   * Serie de rendements normalisés (ex. dérivés de prix Pyth / Drift),
-   * fournie par une couche d’accès on-chain.
+   * Series of normalized returns (e.g. from Pyth / Drift prices),
+   * supplied by an on-chain access layer.
    */
   returns: readonly number[];
 }
@@ -98,9 +98,9 @@ export interface RebalanceDecision {
 }
 
 /**
- * Rebalance le vault en fonction de la volatilité :
- * - volatilité < VOLATILITY_THRESHOLD  → lending (Kamino + Marginfi),
- * - volatilité >= VOLATILITY_THRESHOLD → delta neutral (Drift).
+ * Rebalances the vault based on volatility:
+ * - volatility < VOLATILITY_THRESHOLD  → lending (Kamino + Marginfi),
+ * - volatility >= VOLATILITY_THRESHOLD → delta-neutral (Drift).
  */
 export function rebalance(inputs: RebalanceInputs): RebalanceDecision {
   const volatility = checkVolatility({ returns: inputs.returns });

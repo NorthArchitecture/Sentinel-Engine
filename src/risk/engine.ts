@@ -2,40 +2,40 @@
 // Sentinel Protocol — North Architecture
 // Copyright (c) 2026 North Architecture. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-NorthArchitecture-SIL-1.0
-// Repo original : github.com/NorthArchitecture/sentinel-engine
-// Ranger Earn Build-A-Bear Hackathon 2025 — usage limité.
-// Voir LICENSE.md pour conditions complètes.
+// Original repo: github.com/NorthArchitecture/sentinel-engine
+// Ranger Earn Build-A-Bear Hackathon 2025 — limited use.
+// See LICENSE.md for full terms.
 // ================================================================
 
 /**
- * Moteur de risque Sentinel :
- * - drawdown max avec circuit breaker,
- * - score de volatilité (utilisé pour le routing lending vs delta neutral).
+ * Sentinel risk engine:
+ * - max drawdown with circuit breaker,
+ * - volatility score (used for lending vs delta-neutral routing).
  *
- * Aucune interaction réseau ici : les données on-chain sont fournies par l’appelant
- * (prix, PnL, équité), ce module ne fait que les agréger et appliquer les gardes.
+ * No network interaction here: on-chain data is supplied by the caller
+ * (price, PnL, equity); this module only aggregates and applies guards.
  */
 
 /**
- * Seuil de drawdown maximum autorisé.
- * 0.15 = -15 % par rapport au plus haut historique.
+ * Maximum allowed drawdown threshold.
+ * 0.15 = -15% from peak.
  */
 export const MAX_DRAWDOWN_THRESHOLD = 0.15;
 
 export interface RiskEquitySnapshot {
   /**
-   * Plus haut niveau d’équité observé (en unités de base, ex. lamports).
+   * Highest observed equity level (in base units, e.g. lamports).
    */
   peakEquity: bigint;
   /**
-   * Équité actuelle (en unités de base, ex. lamports).
+   * Current equity (in base units, e.g. lamports).
    */
   currentEquity: bigint;
 }
 
 export interface CircuitBreakerConfig {
   /**
-   * Seuil de drawdown en fraction (0.15 = -15 %).
+   * Drawdown threshold as a fraction (0.15 = -15%).
    */
   maxDrawdownThreshold: number;
 }
@@ -43,7 +43,7 @@ export interface CircuitBreakerConfig {
 export interface CircuitBreakerState {
   tripped: boolean;
   /**
-   * Drawdown courant en fraction (0.15 = -15 %).
+   * Current drawdown as a fraction (0.15 = -15%).
    */
   drawdown: number;
   threshold: number;
@@ -54,7 +54,7 @@ const DEFAULT_CIRCUIT_BREAKER_CONFIG: CircuitBreakerConfig = {
 };
 
 /**
- * Calcule le drawdown courant (en fraction) à partir des niveaux d’équité.
+ * Computes current drawdown (as a fraction) from equity levels.
  */
 export function computeDrawdown(snapshot: RiskEquitySnapshot): number {
   if (snapshot.peakEquity <= 0n) {
@@ -77,8 +77,8 @@ export function computeDrawdown(snapshot: RiskEquitySnapshot): number {
 }
 
 /**
- * Circuit breaker : stoppe toute nouvelle opération si le drawdown dépasse
- * le seuil configuré.
+ * Circuit breaker: stops any new operation if drawdown exceeds
+ * the configured threshold.
  */
 export function checkCircuitBreaker(
   snapshot: RiskEquitySnapshot,
@@ -94,29 +94,29 @@ export function checkCircuitBreaker(
   };
 }
 
-// ————————————————— Volatilité —————————————————
+// ————————————————— Volatility —————————————————
 
 /**
- * Entrées nécessaires pour calculer un score de volatilité.
- * Les returns doivent être des rendements normalisés (ex. log-returns),
- * dérivés de prix on-chain (Pyth, Drift, etc.).
+ * Inputs required to compute a volatility score.
+ * Returns must be normalized (e.g. log-returns),
+ * derived from on-chain prices (Pyth, Drift, etc.).
  */
 export interface VolatilityInputs {
   /**
-   * Série de rendements normalisés sur une fenêtre donnée (ex. 1h, 24h).
+   * Series of normalized returns over a given window (e.g. 1h, 24h).
    */
   returns: readonly number[];
 }
 
 /**
- * Score de volatilité agrégé, utilisé par le moteur de stratégie.
- * Par convention, 0 = pas de volatilité, >0 = volatilité croissante.
+ * Aggregate volatility score, used by the strategy engine.
+ * By convention, 0 = no volatility, >0 = increasing volatility.
  */
 export type VolatilityScore = number;
 
 /**
- * Calcule un score de volatilité simple (écart-type des rendements).
- * L’appelant est responsable de fournir des données de marché on-chain.
+ * Computes a simple volatility score (standard deviation of returns).
+ * Caller is responsible for supplying on-chain market data.
  */
 export function checkVolatility(inputs: VolatilityInputs): VolatilityScore {
   const { returns } = inputs;

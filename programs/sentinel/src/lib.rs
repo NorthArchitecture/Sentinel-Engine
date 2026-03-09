@@ -1285,24 +1285,24 @@ pub struct ConfidentialTransfer<'info> {
         constraint = sender_rail.is_active @ SentinelError::RailInactive,
         has_one = authority @ SentinelError::Unauthorized
     )]
-    pub sender_rail: Account<'info, RailState>,
+    pub sender_rail: Box<Account<'info, RailState>>,
     #[account(
         constraint = receiver_rail.is_active @ SentinelError::RailInactive,
         constraint = receiver_rail.authority == receiver_authority.key() @ SentinelError::Unauthorized
     )]
-    pub receiver_rail: Account<'info, RailState>,
+    pub receiver_rail: Box<Account<'info, RailState>>,
     #[account(
         mut,
         seeds = [b"zk_vault", sender_rail.key().as_ref()],
         bump = sender_zk_vault.bump,
     )]
-    pub sender_zk_vault: Account<'info, ZkVault>,
+    pub sender_zk_vault: Box<Account<'info, ZkVault>>,
     #[account(
         mut,
         seeds = [b"zk_vault", receiver_rail.key().as_ref()],
         bump = receiver_zk_vault.bump,
     )]
-    pub receiver_zk_vault: Account<'info, ZkVault>,
+    pub receiver_zk_vault: Box<Account<'info, ZkVault>>,
     #[account(
         mut,
         seeds = [b"asset_vault", sender_rail.key().as_ref(), SOL_ASSET_SEED],
@@ -1310,7 +1310,7 @@ pub struct ConfidentialTransfer<'info> {
         constraint = sender_sol_asset_state.rail == sender_rail.key() @ SentinelError::InvalidAssetState,
         constraint = sender_sol_asset_state.asset_key == sol_asset_key() @ SentinelError::InvalidAssetState,
     )]
-    pub sender_sol_asset_state: Account<'info, VaultAssetState>,
+    pub sender_sol_asset_state: Box<Account<'info, VaultAssetState>>,
     #[account(
         mut,
         seeds = [b"asset_vault", receiver_rail.key().as_ref(), SOL_ASSET_SEED],
@@ -1318,7 +1318,7 @@ pub struct ConfidentialTransfer<'info> {
         constraint = receiver_sol_asset_state.rail == receiver_rail.key() @ SentinelError::InvalidAssetState,
         constraint = receiver_sol_asset_state.asset_key == sol_asset_key() @ SentinelError::InvalidAssetState,
     )]
-    pub receiver_sol_asset_state: Account<'info, VaultAssetState>,
+    pub receiver_sol_asset_state: Box<Account<'info, VaultAssetState>>,
     #[account(
         mut,
         seeds = [b"vault_pool", sender_rail.key().as_ref()],
@@ -1347,7 +1347,7 @@ pub struct ConfidentialTransfer<'info> {
         ],
         bump,
     )]
-    pub transfer_record: Account<'info, TransferRecord>,
+    pub transfer_record: Box<Account<'info, TransferRecord>>,
     #[account(mut)]
     pub authority: Signer<'info>,
     pub receiver_authority: Signer<'info>,

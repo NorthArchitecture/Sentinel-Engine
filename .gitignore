@@ -18,10 +18,12 @@ circuits/package-lock.json
 # Security - private keys
 ma-cle-pro.json
 *.keypair.json
+target/deploy/*-keypair.json
 faucet-devnet-keypair.json
 id.json
 id/
 .env
+.env.local
 deploy-devnet.mjs
 
 # Frontend (separate project)

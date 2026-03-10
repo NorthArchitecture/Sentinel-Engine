@@ -105,7 +105,19 @@ Tests are designed to run against devnet with **minimal SOL funding** to stay wi
 
 ---
 
-## 5. Strategy and status
+## 5. Live demo
+
+Run the full deposit → confidential transfer → withdraw flow:
+
+```bash
+npx ts-node --esm scripts/demo.ts
+```
+
+Judges can run this command to see the complete ZK privacy flow on devnet. SOL devnet will be provided for live testing.
+
+---
+
+## 6. Strategy and status
 
 For the **Ranger Earn Build-A-Bear Hackathon**, the positioning is:
 
@@ -127,7 +139,7 @@ Mainnet deployment will only occur after additional audits and institutional onb
 
 ---
 
-## 6. License
+## 7. License
 
 This repository is distributed under the **Sovereign Institutional License (SIL) v1.0** of North Architecture.
 

@@ -141,4 +141,29 @@ The Groth16 verification keys were generated through a formal ceremony:
 Circuits can be recompiled and the ceremony re-executed via `setup.sh`.
 
 ---
+
+## 🏆 Sentinel-Ranger — Hackathon Architecture (Ranger Earn Build-A-Bear)
+
+### Full stack overview
+Voltr Vault (strategy vault)  
+&nbsp;&nbsp;&nbsp;&nbsp;↓ @voltr/vault-sdk  
+sentinel-adaptor (CPI bridge)  
+&nbsp;&nbsp;&nbsp;&nbsp;↓ Cross-Program Invocation  
+Sentinel ZK Core (Groth16, ElGamal, nullifiers)
+
+### Yield strategy — multi-adaptive
+| Market condition         | Protocol           | APY (est.) |
+|--------------------------|--------------------|------------|
+| Low volatility < 0.15    | Kamino + Marginfi  | 12-15%     |
+| High volatility ≥ 0.15   | Drift delta-neutral| 18-24%     |
+
+### Devnet deployment
+- Sentinel: C2WJzwp5XysqRm5PQuM6ZTAeYxxhRyUWf3UJnZjVqMV5
+- sentinel-adaptor: 3qUHHFrm9twoXBSB5te8fy7hvfvdQjgWR36e44QVScto
+
+### Tests
+- 27/27 tests passing on devnet
+- CPI wiring proven via `tests/sentinel-adaptor.ts`
+
+---
 *The Sentinel-Core logic, Groth16 verification circuits, and O(1) state-lookup mechanisms described here are protected under the North Architecture Sovereign Institutional License (SIL) v1.0. Any unauthorized reproduction for commercial purposes is prohibited.*

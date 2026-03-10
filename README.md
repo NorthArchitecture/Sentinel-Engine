@@ -107,13 +107,31 @@ Tests are designed to run against devnet with **minimal SOL funding** to stay wi
 
 ## 5. Live demo
 
-Run the full deposit → confidential transfer → withdraw flow:
+### Run the full ZK flow demo
 
 ```bash
 npx ts-node --esm scripts/demo.ts
 ```
 
-Judges can run this command to see the complete ZK privacy flow on devnet. SOL devnet will be provided for live testing.
+### Run the backtest (lending vs delta-neutral vs multi-adaptive)
+
+```bash
+npx ts-node --esm scripts/backtest.ts
+```
+
+### Run the full test suite (27/27)
+
+```bash
+npm test
+```
+
+### Deploy to devnet
+
+```bash
+./scripts/deploy-devnet.sh
+```
+
+> Devnet SOL will be provided to judges for live testing.
 
 ---
 

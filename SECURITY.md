@@ -49,3 +49,25 @@ Every movement within a Rail generates a unique, timestamped audit trail.
 If you discover a security vulnerability, please contact us immediately for a coordinated disclosure.
 * **Primary Contact**: Direct Message on **X @North_Protocol**
 * **Response SLA**: Critical security reports are acknowledged within 24 hours.
+
+## 🏆 Sentinel-Ranger — Hackathon Status (Ranger Earn Build-A-Bear)
+
+### Current limitations (devnet)
+- Mock Groth16 proofs used in tests (real proofs required for mainnet)
+- Devnet deployment only — mainnet pending security audit
+- NORTH token gating active in code — temporarily bypassed 
+  for hackathon judge access. Launch planned upon hackathon completion.
+
+### Circuit breaker
+- Max drawdown threshold : -15%
+- Volatility threshold : 0.15
+- Auto-rebalance interval : 3600s
+
+### Tests — 27/27 passing
+- Rail lifecycle, ZK vault, nullifiers, confidential flows
+- CPI wiring sentinel-adaptor → Sentinel proven
+- Multi-asset PDA isolation verified
+
+### IP Protection
+- License : SIL v1.0 — North Architecture
+- See LICENSE.md for full terms

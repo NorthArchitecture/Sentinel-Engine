@@ -23,6 +23,14 @@ import {
   type DeltaNeutralConfig,
   openDeltaNeutralPosition,
 } from "./drift";
+import {
+  depositToKamino,
+  type KaminoDepositParams,
+} from "./kamino";
+import {
+  depositToMarginfi,
+  type MarginfiDepositParams,
+} from "./marginfi";
 
 /**
  * Volatility threshold above which we switch to delta-neutral.
@@ -64,7 +72,10 @@ export type StrategyAllocationPlan =
  * Simple lending allocation plan: 50% Kamino, 50% Marginfi.
  * Details (markets, collateral) are handled at a lower layer.
  */
-export function allocateLending(): LendingAllocationPlan {
+export function allocateLending(
+  _kaminoParams?: KaminoDepositParams,
+  _marginfiParams?: MarginfiDepositParams,
+): LendingAllocationPlan {
   const legs: LendingLeg[] = [
     { protocol: "Kamino", weight: 0.5 },
     { protocol: "Marginfi", weight: 0.5 },
@@ -101,6 +112,12 @@ export interface RebalanceInputs {
    */
   driftContext?: DeltaNeutralContext;
   driftConfig?: DeltaNeutralConfig;
+  /**
+   * Optional Kamino and Marginfi deposit parameters used when
+   * staying in the lending regime.
+   */
+  kaminoDepositParams?: KaminoDepositParams;
+  marginfiDepositParams?: MarginfiDepositParams;
 }
 
 export interface RebalanceDecision {
@@ -122,8 +139,18 @@ export async function rebalance(
   let allocation: StrategyAllocationPlan;
 
   if (volatility < VOLATILITY_THRESHOLD) {
-    allocation = allocateLending();
-    // In the low-volatility regime we stay in lending; no Drift interaction.
+    allocation = allocateLending(
+      inputs.kaminoDepositParams,
+      inputs.marginfiDepositParams,
+    );
+    // In the low-volatility regime we stay in lending; optionally
+    // execute deposits on Kamino and Marginfi for the provided params.
+    if (inputs.kaminoDepositParams) {
+      await depositToKamino(inputs.kaminoDepositParams);
+    }
+    if (inputs.marginfiDepositParams) {
+      await depositToMarginfi(inputs.marginfiDepositParams);
+    }
   } else {
     allocation = allocateDeltaNeutral();
     if (inputs.driftContext && inputs.driftConfig) {

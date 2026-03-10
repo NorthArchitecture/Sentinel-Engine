@@ -98,14 +98,14 @@ describe("sentinel_v2_tests", () => {
         anchor.web3.SystemProgram.transfer({
           fromPubkey: provider.wallet.publicKey,
           toPubkey: mintAuthority.publicKey,
-          lamports: 0.15 * anchor.web3.LAMPORTS_PER_SOL,
+          lamports: 0.05 * anchor.web3.LAMPORTS_PER_SOL,
         })
       )
       .add(
         anchor.web3.SystemProgram.transfer({
           fromPubkey: provider.wallet.publicKey,
           toPubkey: sharedAuth.publicKey,
-          lamports: 0.15 * anchor.web3.LAMPORTS_PER_SOL,
+          lamports: 0.05 * anchor.web3.LAMPORTS_PER_SOL,
         })
       );
     await provider.sendAndConfirm(tx);
@@ -552,21 +552,21 @@ describe("sentinel_v2_token_security_tests", () => {
         anchor.web3.SystemProgram.transfer({
           fromPubkey: provider.wallet.publicKey,
           toPubkey: mintAuthority.publicKey,
-          lamports: 0.8 * anchor.web3.LAMPORTS_PER_SOL,
+          lamports: 0.1 * anchor.web3.LAMPORTS_PER_SOL,
         })
       )
       .add(
         anchor.web3.SystemProgram.transfer({
           fromPubkey: provider.wallet.publicKey,
           toPubkey: aliceAuth.publicKey,
-          lamports: 0.8 * anchor.web3.LAMPORTS_PER_SOL,
+          lamports: 0.1 * anchor.web3.LAMPORTS_PER_SOL,
         })
       )
       .add(
         anchor.web3.SystemProgram.transfer({
           fromPubkey: provider.wallet.publicKey,
           toPubkey: bobAuth.publicKey,
-          lamports: 0.8 * anchor.web3.LAMPORTS_PER_SOL,
+          lamports: 0.1 * anchor.web3.LAMPORTS_PER_SOL,
         })
       );
     await provider.sendAndConfirm(tx);

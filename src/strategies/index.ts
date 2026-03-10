@@ -18,6 +18,11 @@ import {
   checkVolatility,
   type VolatilityScore,
 } from "../risk/engine";
+import {
+  type DeltaNeutralContext,
+  type DeltaNeutralConfig,
+  openDeltaNeutralPosition,
+} from "./drift";
 
 /**
  * Volatility threshold above which we switch to delta-neutral.
@@ -89,6 +94,13 @@ export interface RebalanceInputs {
    * supplied by an on-chain access layer.
    */
   returns: readonly number[];
+  /**
+   * Optional Drift integration context and configuration.
+   * When provided and volatility exceeds the threshold, the
+   * rebalance function will call `openDeltaNeutralPosition`.
+   */
+  driftContext?: DeltaNeutralContext;
+  driftConfig?: DeltaNeutralConfig;
 }
 
 export interface RebalanceDecision {
@@ -102,13 +114,22 @@ export interface RebalanceDecision {
  * - volatility < VOLATILITY_THRESHOLD  → lending (Kamino + Marginfi),
  * - volatility >= VOLATILITY_THRESHOLD → delta-neutral (Drift).
  */
-export function rebalance(inputs: RebalanceInputs): RebalanceDecision {
+export async function rebalance(
+  inputs: RebalanceInputs,
+): Promise<RebalanceDecision> {
   const volatility = checkVolatility({ returns: inputs.returns });
 
-  const allocation: StrategyAllocationPlan =
-    volatility < VOLATILITY_THRESHOLD
-      ? allocateLending()
-      : allocateDeltaNeutral();
+  let allocation: StrategyAllocationPlan;
+
+  if (volatility < VOLATILITY_THRESHOLD) {
+    allocation = allocateLending();
+    // In the low-volatility regime we stay in lending; no Drift interaction.
+  } else {
+    allocation = allocateDeltaNeutral();
+    if (inputs.driftContext && inputs.driftConfig) {
+      await openDeltaNeutralPosition(inputs.driftContext, inputs.driftConfig);
+    }
+  }
 
   return {
     volatility,

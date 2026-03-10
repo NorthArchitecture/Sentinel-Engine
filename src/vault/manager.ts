@@ -8,9 +8,9 @@
 // ================================================================
 
 /**
- * Lifecycle du Voltr vault : initialisation via @voltr/vault-sdk,
- * deposit/withdraw via sentinel-adaptor (CPI vers Sentinel).
- * Aucune logique ZK ici ; les preuves sont fournies par l’appelant.
+ * Voltr vault lifecycle: initialization via @voltr/vault-sdk,
+ * deposit/withdraw via sentinel-adaptor (CPI to Sentinel).
+ * No ZK logic here; proofs are provided by the caller.
  */
 
 import {
@@ -19,6 +19,7 @@ import {
   type TransactionInstruction,
 } from "@solana/web3.js";
 import type { BN } from "@coral-xyz/anchor";
+import { VoltrClient } from "@voltr/vault-sdk";
 import {
   GROTH16_PROOF_SIZE,
   COMMITMENT_SIZE,
@@ -162,16 +163,11 @@ function validateWithdrawArgs(args: SentinelWithdrawArgs): void {
 // ——— API publique ———
 
 /**
- * Construit une transaction d’initialisation de vault Voltr.
- * Nécessite @voltr/vault-sdk : VoltrClient.createInitializeVaultIx.
+ * Build an initialization transaction for a Voltr vault.
+ * Uses @voltr/vault-sdk VoltrClient.createInitializeVaultIx.
  */
 export async function initVault(
-  client: {
-    createInitializeVaultIx: (
-      params: VoltrVaultInitParams,
-      accounts: VoltrVaultInitAccounts,
-    ) => Promise<TransactionInstruction>;
-  },
+  client: VoltrClient,
   params: VoltrVaultInitParams,
   accounts: VoltrVaultInitAccounts,
 ): Promise<Transaction> {

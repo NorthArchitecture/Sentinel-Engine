@@ -10,6 +10,7 @@
   "dependencies": {
     "@coral-xyz/anchor": "0.31.1",
     "@drift-labs/sdk": "^2.158.0-beta.3",
+    "@kamino-finance/klend-sdk": "^7.3.20",
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.91.8",
     "@voltr/vault-sdk": "^1.0.20"

@@ -165,5 +165,9 @@ Sentinel ZK Core (Groth16, ElGamal, nullifiers)
 - 27/27 tests passing on devnet
 - CPI wiring proven via `tests/sentinel-adaptor.ts`
 
+### Fees & Treasury (devnet vs mainnet)
+- **Devnet (hackathon)** : aucune fee manager ou performance fee n’est effectivement prélevée on-chain ; 100 % des fonds restent dans les vaults utilisateurs (SOL et SPL). Le programme Sentinel ne contient pas encore de compte dédié `fees_vault` ni d’instruction `claim_fees`.  
+- **Mainnet (design prévu)** : les fees seront routées vers un `Treasury Vault` séparé des vaults utilisateurs (PDA ou multisig de gouvernance). Une instruction explicite `claim_fees` permettra à la gouvernance / multisig de retirer ces fees dans un cadre MiCA‑compatible, sans introduire de backdoor sur les dépôts des clients. Cette partie est volontairement reportée après le hackathon pour éviter d’ajouter de la surface d’attaque à la dernière minute.
+
 ---
 *The Sentinel-Core logic, Groth16 verification circuits, and O(1) state-lookup mechanisms described here are protected under the North Architecture Sovereign Institutional License (SIL) v1.0. Any unauthorized reproduction for commercial purposes is prohibited.*

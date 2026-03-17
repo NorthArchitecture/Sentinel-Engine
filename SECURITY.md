@@ -71,3 +71,7 @@ If you discover a security vulnerability, please contact us immediately for a co
 ### IP Protection
 - License : SIL v1.0 — North Architecture
 - See LICENSE.md for full terms
+
+### Fees & Treasury — sécurité et conformité
+- **Devnet (hackathon)** : aucune fee manager ou performance fee n’est prélevée on-chain. Le programme Sentinel ne dispose pas encore de `fees_vault` séparé ni d’instruction `claim_fees`. Tous les flux de SOL/SPL restent cantonnés aux vaults utilisateurs (vault_pool, VaultAssetState) et sont entièrement couverts par les invariants actuels.  
+- **Mainnet (planifié)** : les fees seront redirigées vers un vault de trésorerie dédié (PDA ou multisig de gouvernance), distinct des comptes utilisateurs. Les règles de retrait (instruction `claim_fees`) seront soumises à gouvernance et documentées pour répondre aux exigences MiCA / audit (séparation des fonds clients vs revenus du protocole). Aucune “backdoor” implicite n’est prévue dans la version hackathon.

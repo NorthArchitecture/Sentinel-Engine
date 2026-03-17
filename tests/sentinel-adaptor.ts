@@ -116,6 +116,19 @@ describe("sentinel_adaptor_cpi_deposit", () => {
     )[0];
   }
 
+  function getTransferPda(
+    senderRail: PublicKey,
+    receiverRail: PublicKey,
+    nonce: number,
+  ): PublicKey {
+    const nonceBuf = Buffer.alloc(8);
+    nonceBuf.writeBigInt64LE(BigInt(nonce), 0);
+    return PublicKey.findProgramAddressSync(
+      [Buffer.from("transfer"), senderRail.toBuffer(), receiverRail.toBuffer(), nonceBuf],
+      sentinelProgram.programId,
+    )[0];
+  }
+
   before(async () => {
     // Fund depositor with SOL
     const fundTx = new anchor.web3.Transaction().add(
@@ -252,6 +265,85 @@ describe("sentinel_adaptor_cpi_deposit", () => {
           vaultPool: vaultPoolPda,
           depositRecord: depositRecordPda,
           sender: depositor.publicKey,
+          authority: depositor.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .preInstructions([PRIORITY_FEE_IX])
+        .signers([depositor])
+        .rpc(),
+    );
+  });
+
+  it("rejects invalid ZK proof when calling confidential_transfer via sentinel-adaptor CPI", async () => {
+    const transferNonce = 1;
+    const amountLamports = 250_000;
+
+    const senderRail = railPda;
+    const receiverRail = railPda;
+    const senderZkVault = zkVaultPda;
+    const receiverZkVault = zkVaultPda;
+    const senderSolAssetState = solAssetStatePda;
+    const receiverSolAssetState = solAssetStatePda;
+    const senderVaultPool = vaultPoolPda;
+    const receiverVaultPool = vaultPoolPda;
+    const transferRecordPda = getTransferPda(senderRail, receiverRail, transferNonce);
+
+    await expectTxFail(() =>
+      adaptorProgram.methods
+        .confidentialTransfer(
+          new BN(transferNonce),
+          new BN(amountLamports),
+          Buffer.from(dummyProof),
+          commitmentA,
+          commitmentA,
+          commitmentA,
+          commitmentA,
+          nullifierA,
+          encryptedAmount,
+          encryptedAmount,
+        )
+        .accounts({
+          sentinelProgram: sentinelProgram.programId,
+          senderRail,
+          receiverRail,
+          senderZkVault,
+          receiverZkVault,
+          senderSolAssetState,
+          receiverSolAssetState,
+          senderVaultPool,
+          receiverVaultPool,
+          transferRecord: transferRecordPda,
+          authority: depositor.publicKey,
+          receiverAuthority: depositor.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .preInstructions([PRIORITY_FEE_IX])
+        .signers([depositor])
+        .rpc(),
+    );
+  });
+
+  it("rejects invalid ZK proof when calling withdraw via sentinel-adaptor CPI", async () => {
+    const amountLamports = 100_000;
+
+    await expectTxFail(() =>
+      adaptorProgram.methods
+        .withdraw(
+          new BN(amountLamports),
+          Buffer.from(dummyProof),
+          commitmentA,
+          commitmentA,
+          nullifierA,
+          encryptedAmount,
+        )
+        .accounts({
+          sentinelProgram: sentinelProgram.programId,
+          rail: railPda,
+          zkVault: zkVaultPda,
+          solAssetState: solAssetStatePda,
+          depositRecord: depositRecordPda,
+          vaultPool: vaultPoolPda,
+          receiver: depositor.publicKey,
           authority: depositor.publicKey,
           systemProgram: SystemProgram.programId,
         })

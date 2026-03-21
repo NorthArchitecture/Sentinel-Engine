@@ -1,3 +1,14 @@
+<!--
+================================================================
+Sentinel Protocol — North Architecture
+Copyright (c) 2026 North Architecture. All rights reserved.
+SPDX-License-Identifier: LicenseRef-NorthArchitecture-SIL-1.0
+Repository: https://github.com/NorthArchitecture/Sentinel-Engine
+Security & compliance posture — institutional disclosure.
+See LICENSE.md for full terms.
+================================================================
+-->
+
 ![Security](https://img.shields.io/badge/Security-Audit--Seal-success?logo=shield)
 ![Compliance](https://img.shields.io/badge/Compliance-MiCA--Ready-blue)
 ![Privacy](https://img.shields.io/badge/Privacy-Zero--Knowledge-blueviolet)
@@ -5,17 +16,17 @@
 ![ZK](https://img.shields.io/badge/ZK-Groth16--bn128-purple)
 ![License](https://img.shields.io/badge/License-SIL_1.0-lightgrey)
 
-# 🛡️ Institutional Security & Privacy Standards
+# Institutional Security & Privacy Standards
 
 Sentinel Engine is built on a "Security-First" architecture. Our core engine, **Sentinel V2**, has been engineered to provide institutional privacy through **on-chain Groth16 zero-knowledge proof verification** while maintaining O(1) state lookup performance.
 
-### 🔐 ZK Proof Security
+### ZK Proof Security
 * **Groth16 On-Chain Verification**: Every deposit, transfer, and withdrawal requires a valid 256-byte Groth16 proof verified on-chain via Solana's alt_bn128 precompiles. No state change occurs without mathematical proof.
 * **Poseidon Commitments**: Balance commitments use `Poseidon(secret, amount)` — a SNARK-friendly hash providing both binding (can't change amount) and hiding (can't reverse secret) guarantees.
 * **Commitment Consistency**: On-chain balance commitments are verified against provided values before any operation. Mismatched commitments are rejected at the program level.
 * **Trusted Setup Integrity**: Verification keys are generated through a formal Powers of Tau ceremony (pot16) with per-circuit phase 2 contributions. Keys are embedded as static byte arrays in the program — no external loading, no runtime manipulation.
 
-### 🔒 Privacy & Integrity Layer
+### Privacy & Integrity Layer
 * **Nullifier Registry**: We prevent double-spending and replay attacks using a deterministic Nullifier Registry. Each hash is scoped to its specific rail: `[b"nullifier", rail_key, hash]`, eliminating cross-rail interference.
 * **Deterministic PDA Isolation**: Handshake accounts are cryptographically bound to their parent Rail. This ensures that even if one Rail is compromised, all other institutional flows remain mathematically isolated.
 * **Transfer Nonce Replay Hardening**: Confidential transfer records are derived with nonce-bound PDA seeds `[b"transfer", sender_rail, receiver_rail, transfer_nonce]`, preventing replay and collision across transfer paths.
@@ -25,38 +36,64 @@ Sentinel Engine is built on a "Security-First" architecture. Our core engine, **
 * **Anchor Hardening**: We leverage Anchor's `require!` macros and account constraints (`has_one`, `seeds`, receiver authority checks) to enforce strict ownership and prevent unauthorized state mutations.
 * **Asset State Isolation**: SOL and SPL balances are split into independent VaultAssetState PDAs per rail and per asset key, eliminating cross-asset contamination risk.
 
-### 🛡️ Institutional Governance (State Enforcement)
+### Institutional Governance (State Enforcement)
 * **Granular Control**: We distinguish between `Pause` (operational stop) and `Deactivate` (permanent termination with reason code). This reflects real-world banking and PSP risk management models.
 * **Post-Seal Immutability**: Once a Rail is marked as `is_sealed`, the state becomes normative and immutable. No further mutations or handshakes can be processed, ensuring a "frozen" audit trail.
 * **Handshake Revocation**: Individual handshakes can be revoked with reason codes, providing granular compliance control without affecting the entire rail.
 * **Authority Multi-Sig Ready**: The `authority` field is designed to be owned by a Squads Multi-sig or a DAO Governance program, preventing "Single Point of Failure" risks.
 
-### ⚡ Performance & Stress-Testing
+### Performance & Stress-Testing
 * **O(1) Efficiency**: By bypassing Merkle Tree depth-searches, our security checks take constant time. The system performance does not degrade as the registry grows.
 * **Fixed Proof Size**: Groth16 proofs are always 256 bytes regardless of circuit complexity — predictable compute costs.
 * **Compute Unit (CU) Optimization**: Optimized for Solana Sealevel, our validation logic leverages native alt_bn128 precompiles for efficient pairing checks.
 * **Memory Optimization via Boxed Accounts**: Critical token account contexts are boxed to reduce stack pressure and keep execution stable under BPF limits.
 * **Critical Validation Suite**: 26/26 tests passed locally, covering success paths (deposit, confidential transfer, withdrawal), multi-asset isolation, PDA authority constraints, nullifier replay rejection, and transfer nonce integrity.
 
-### 🕵️ Auditability & Compliance
+### Auditability & Compliance
 Every movement within a Rail generates a unique, timestamped audit trail.
 * **Metadata Integrity**: We store `created_at`, `sealed_at`, `deactivated_at`, and `version` directly on-chain.
 * **Revocation Reason**: Each revoked handshake and deactivated rail includes a mandatory `reason_code`, providing the "Why" behind every compliance action — a requirement for Big4 auditors.
 * **Transfer Records**: Every confidential transfer creates an on-chain `TransferRecord` with commitment hashes, nullifier, proof hash, and `amount_lamports` (for receiver balance display and auditability).
 * **Token Support**: Full SPL token privacy support with `deposit_token`, `confidential_transfer_token`, and `withdraw_token` — same ZK guarantees for any Solana token.
 
-### 📞 Reporting a Vulnerability
+### $NORTH Token Gate — devnet bypass (`IS_DEVNET`)
+
+* **Production intent:** The **$NORTH** token gate remains **active for mainnet-class configurations** — rails that require NORTH staking or balance thresholds enforce institutional admission in production.
+* **Devnet / judge flows:** The UI applies an **`IS_DEVNET`** bypass so operators and judges can exercise flows **without** satisfying mainnet NORTH requirements when the deployment targets **devnet**. This is typically aligned with **`NEXT_PUBLIC_NETWORK=devnet`** (or equivalent app configuration) so the gate is **bypassed only** in that environment.
+* **Mainnet:** The same gate logic is **not** bypassed when the application is built and configured for **mainnet** — NORTH requirements apply as designed.
+
+### On-chain gate — `mainnet` feature in `programs/sentinel/Cargo.toml`
+
+* **`[features]`** includes **`mainnet`**.  
+* **Devnet builds** (default, **without** `--features mainnet`) compile **without** the stricter **initialize_rail** path that requires **NORTH &gt; 0** for rail bootstrap — enabling hackathon and integration testing on devnet.  
+* **Mainnet-oriented builds** use **`anchor build -- -p sentinel --features mainnet`** (per repository deployment notes) so **`initialize_rail`** enforces the **NORTH &gt; 0** institutional gate on-chain.
+
+### Compliance — `checkWalletCompliance()`
+
+* **`checkWalletCompliance()`** (see `frontend/src/app/sentinel/lib/checkWalletCompliance.ts`) evaluates **blacklist** rules and **on-chain activity** heuristics before high-touch actions.  
+* **Roadmap:** Integration with **Chainalysis**, **Elliptic**, or comparable screening APIs is **planned for mainnet** to meet institutional AML / travel-rule expectations without weakening ZK core guarantees.
+
+### AI Security Monitor
+
+The security monitor surfaces **three primary on-chain / market signals**:
+
+1. **Funding rate** — stress in perpetual / funding markets.  
+2. **Liquidity** — depth and execution risk.  
+3. **Open interest (OI)** — positioning and crowding risk.
+
+**Alert levels:** **`warning`** and **`critical`** drive UI emphasis (banners, colour states) so operators can respond before strategy allocation or rail operations degrade.
+
+### Reporting a Vulnerability
 If you discover a security vulnerability, please contact us immediately for a coordinated disclosure.
 * **Primary Contact**: Direct Message on **X @North_Protocol**
 * **Response SLA**: Critical security reports are acknowledged within 24 hours.
 
-## 🏆 Sentinel-Ranger — Hackathon Status (Ranger Earn Build-A-Bear)
+## Sentinel-Ranger — Hackathon Status (Ranger Earn Build-A-Bear)
 
 ### Current limitations (devnet)
 - Mock Groth16 proofs used in tests (real proofs required for mainnet)
 - Devnet deployment only — mainnet pending security audit
-- NORTH token gating active in code — temporarily bypassed 
-  for hackathon judge access. Launch planned upon hackathon completion.
+- **$NORTH** gating: **bypassed on devnet** via **`IS_DEVNET`** / network config; **enforced** for mainnet builds (UI + on-chain `mainnet` feature). **$NORTH** token launch planned upon hackathon completion.
 
 ### Circuit breaker
 - Max drawdown threshold : -15%

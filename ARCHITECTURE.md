@@ -1,10 +1,21 @@
-# 🏛️ Architecture: Sentinel Engine (V2 - Sentinel Core)
+<!--
+================================================================
+Sentinel Protocol — North Architecture
+Copyright (c) 2026 North Architecture. All rights reserved.
+SPDX-License-Identifier: LicenseRef-NorthArchitecture-SIL-1.0
+Repository: https://github.com/NorthArchitecture/Sentinel-Engine
+Technical architecture — Sentinel Engine V2 (core).
+See LICENSE.md for full terms.
+================================================================
+-->
 
-This document details the technical implementation of the **Sentinel Engine** protocol, a high-performance zero-knowledge privacy infrastructure built on Solana.
+# Architecture: Sentinel Engine (V2 — Sentinel Core)
+
+This document details the technical implementation of the **Sentinel Engine** protocol, a high-performance zero-knowledge privacy infrastructure built on Solana. State reflected: **21 March 2026**.
 
 ---
 
-## ⚡ O(1) Execution Model
+## O(1) Execution Model
 Our architecture achieves **constant-time** privacy operations by bypassing traditional Merkle Trees in favor of a native PDA-based Registry:
 1.  **Sentinel Program (Rust/Anchor):** Implements a stateless-first validation layer with on-chain Groth16 proof verification for institutional privacy rails.
 2.  **Nullifier Registry Layer:** Utilizes deterministic PDA derivation `[b"nullifier", rail_key, nullifier_hash]` to ensure transaction uniqueness. Lookups are performed in **constant time O(1)**, eliminating the scaling bottlenecks found in legacy privacy protocols.
@@ -12,7 +23,7 @@ Our architecture achieves **constant-time** privacy operations by bypassing trad
 
 ---
 
-## 🔐 ZK Privacy Stack
+## ZK Privacy Stack
 
 ### Groth16 On-Chain Verifier
 The Sentinel program includes a native Groth16 verifier operating over the **alt_bn128** elliptic curve via Solana precompiles:
@@ -37,7 +48,7 @@ Three circuits enforce privacy constraints off-chain, with proofs verified on-ch
 
 ---
 
-## 🏗️ Account Architecture (PDA Layout)
+## Account Architecture (PDA Layout)
 
 ```
 RailState           [b"rail", authority]
@@ -55,7 +66,7 @@ Each account is deterministically derived, enabling **O(1) lookups** without on-
 
 ---
 
-## 🔄 Transaction Flows
+## Transaction Flows
 
 ### Deposit (SOL or Token)
 ```
@@ -87,7 +98,7 @@ On-chain: verify proof → verify balance sufficient → transfer from vault →
 
 ---
 
-## 🛡️ Security Model
+## Security Model
 
 ### On-Chain Enforcement
 - **Groth16 verification** on every deposit, transfer, and withdrawal — no state change without valid proof
@@ -111,7 +122,7 @@ Active → Deactivated (with reason code)
 
 ---
 
-## 🌑 Data Fragmentation & Privacy Guarantees
+## Data Fragmentation & Privacy Guarantees
 
 To ensure "Silence", transaction data is never stored in a centralized state:
 - **Handshake Scoping**: Each transaction generates a unique `HandshakeState` account scoped to its specific `RailState` via PDAs, preventing global transaction graph analysis.
@@ -121,7 +132,7 @@ To ensure "Silence", transaction data is never stored in a centralized state:
 
 ---
 
-## ✅ Critical Reliability Validation
+## Critical Reliability Validation
 
 The current institutional validation suite focuses on production-critical paths and security invariants:
 - **26 critical tests passed**
@@ -131,7 +142,7 @@ The current institutional validation suite focuses on production-critical paths 
 
 ---
 
-## 📋 Trusted Setup
+## Trusted Setup
 
 The Groth16 verification keys were generated through a formal ceremony:
 1. **Powers of Tau** (pot16, 2^16 constraints) — universal phase 1
@@ -142,32 +153,63 @@ Circuits can be recompiled and the ceremony re-executed via `setup.sh`.
 
 ---
 
-## 🏆 Sentinel-Ranger — Hackathon Architecture (Ranger Earn Build-A-Bear)
+## Sentinel-Ranger — Hackathon Architecture (Ranger Earn Build-A-Bear)
 
-### Full stack overview
-Voltr Vault (strategy vault)  
-&nbsp;&nbsp;&nbsp;&nbsp;↓ @voltr/vault-sdk  
-sentinel-adaptor (CPI bridge)  
-&nbsp;&nbsp;&nbsp;&nbsp;↓ Cross-Program Invocation  
+### Full stack overview (with AI layer)
+
+```text
+AI Layer (risk scoring, dashboard, security monitor, compliance MiCA)
+    ↓ (application / SDK — off-chain & UI)
+Voltr Vault (strategy vault)
+    ↓ @voltr/vault-sdk
+sentinel-adaptor (CPI bridge)
+    ↓ Cross-Program Invocation
 Sentinel ZK Core (Groth16, ElGamal, nullifiers)
+```
 
-### Yield strategy — multi-adaptive
-| Market condition         | Protocol           | APY (est.) |
-|--------------------------|--------------------|------------|
-| Low volatility < 0.15    | Kamino + Marginfi  | 12-15%     |
-| High volatility ≥ 0.15   | Drift delta-neutral| 18-24%     |
+The **AI layer** sits above Voltr in the operator and end-user experience: it informs risk posture and compliance surfacing; it does not replace on-chain proof verification in Sentinel.
 
-### Devnet deployment
-- Sentinel: C2WJzwp5XysqRm5PQuM6ZTAeYxxhRyUWf3UJnZjVqMV5
-- sentinel-adaptor: 3qUHHFrm9twoXBSB5te8fy7hvfvdQjgWR36e44QVScto
+### AI layer — application components
+
+| Concern | Location |
+| :--- | :--- |
+| Risk score computation | `src/ai/riskScore.ts` — `computeRiskScore()` |
+| Security monitor hook | `frontend/src/app/sentinel/hooks/useSecurityMonitor.ts` |
+| Wallet compliance | `frontend/src/app/sentinel/lib/checkWalletCompliance.ts` |
+| Risk Engine UI | `frontend/src/app/sentinel/components/RiskEngineWidget.tsx` |
+| Security alerts | `frontend/src/app/sentinel/components/SecurityAlertBanner.tsx` |
+| Compliance badge | `frontend/src/app/sentinel/components/ComplianceBadge.tsx` |
+
+### Devnet vs mainnet — `IS_DEVNET` and program features
+
+- **UI / client:** The application uses an **`IS_DEVNET`** pattern so **$NORTH** gating can be **bypassed on devnet** for judge and integration testing while remaining **enforced toward mainnet** behaviour when configured for production networks (see `SECURITY.md`).
+- **On-chain:** `programs/sentinel/Cargo.toml` defines a **`mainnet`** feature flag. **Devnet builds** (default, **without** `--features mainnet`) align with **North** rail checks for hackathon flows — **`initialize_rail` does not require NORTH &gt; 0** in that configuration. **Mainnet-oriented builds** use `--features mainnet` to activate stricter rail initialization consistent with token-gated production rails (see deployment notes in repository docs).
+
+### Yield strategy — multi-adaptive (with AI scoring)
+
+| Market condition | Protocol | APY (est.) |
+|------------------|----------|------------|
+| Low volatility &lt; 0.15 | Kamino + Marginfi | 12–15% |
+| High volatility ≥ 0.15 | Drift delta-neutral | 18–24% |
+
+Signals are combined via **adaptive multi-signal scoring** (see `STRATEGY.md`).
+
+### Devnet deployment (21 March 2026)
+
+- Sentinel: `C2WJzwp5XysqRm5PQuM6ZTAeYxxhRyUWf3UJnZjVqMV5`
+- sentinel-adaptor: `3qUHHFrm9twoXBSB5te8fy7hvfvdQjgWR36e44QVScto`
+- Frontend: [https://silent-rails.vercel.app](https://silent-rails.vercel.app)
 
 ### Tests
+
 - 27/27 tests passing on devnet
 - CPI wiring proven via `tests/sentinel-adaptor.ts`
 
 ### Fees & Treasury (devnet vs mainnet)
+
 - **Devnet (hackathon)** : aucune fee manager ou performance fee n’est effectivement prélevée on-chain ; 100 % des fonds restent dans les vaults utilisateurs (SOL et SPL). Le programme Sentinel ne contient pas encore de compte dédié `fees_vault` ni d’instruction `claim_fees`.  
 - **Mainnet (design prévu)** : les fees seront routées vers un `Treasury Vault` séparé des vaults utilisateurs (PDA ou multisig de gouvernance). Une instruction explicite `claim_fees` permettra à la gouvernance / multisig de retirer ces fees dans un cadre MiCA‑compatible, sans introduire de backdoor sur les dépôts des clients. Cette partie est volontairement reportée après le hackathon pour éviter d’ajouter de la surface d’attaque à la dernière minute.
 
 ---
+
 *The Sentinel-Core logic, Groth16 verification circuits, and O(1) state-lookup mechanisms described here are protected under the North Architecture Sovereign Institutional License (SIL) v1.0. Any unauthorized reproduction for commercial purposes is prohibited.*

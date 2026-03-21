@@ -3,8 +3,8 @@
 Sentinel Protocol — North Architecture
 Copyright (c) 2026 North Architecture. All rights reserved.
 SPDX-License-Identifier: LicenseRef-NorthArchitecture-SIL-1.0
-Repo original: github.com/NorthArchitecture/sentinel-engine
-Ranger Earn Build-A-Bear Hackathon 2025 — limited use.
+Repository: https://github.com/NorthArchitecture/Sentinel-Engine
+Ranger Earn Build-A-Bear Hackathon — institutional build.
 See LICENSE.md for full terms.
 ================================================================
 -->
@@ -26,19 +26,39 @@ Deposits stay **transparent**. Strategies stay **invisible**.
 
 ---
 
-## 1. Project description
+## What is Sentinel?
 
-Sentinel is an **institutional-grade ZK privacy vault** on Solana.
+Sentinel is an **institutional-grade ZK privacy vault** on Solana: transparent deposits and withdrawals for regulators and auditors, **confidential internal strategy** (vault-to-vault flows encrypted and proven on-chain with **Groth16**), and institutional rails (KYC’d rails, governance controls, MiCA-ready auditability).
 
-- **Transparent deposits and withdrawals** so regulators, auditors, and LPs can see capital flows.
-- **Confidential internal strategy**: vault-to-vault movements are encrypted and proven with on-chain **Groth16** proofs. Allocation, sizing, and timing remain private.
-- **Institutional rails**: KYC’d rails, governance controls (pause, deactivate), and MiCA-ready auditability.
+The stack now includes a full **AI layer**: **adaptive risk scoring**, a **dashboard widget** for live risk intelligence, a **security monitor** (funding, liquidity, open interest), and **MiCA-oriented compliance** surfacing — aligned with institutional operations and judge-facing demos on devnet.
 
-On the `sentinel-ranger` branch, this repository is the hackathon version used for the **Ranger Earn Build-A-Bear** submission.
+On the `sentinel-ranger` branch, this repository is the hackathon version for the **Ranger Earn Build-A-Bear** submission.
 
 ---
 
-## 2. Architecture (Voltr → adaptor → Sentinel)
+## Live demo & repository
+
+| Resource | Link |
+| :--- | :--- |
+| **Frontend (live)** | [https://silent-rails.vercel.app](https://silent-rails.vercel.app) |
+| **GitHub** | [https://github.com/NorthArchitecture/Sentinel-Engine](https://github.com/NorthArchitecture/Sentinel-Engine) |
+
+---
+
+## Program IDs (devnet)
+
+Both programs are deployed on **Solana devnet** (state as of **21 March 2026**):
+
+| Program | Program ID |
+| :--- | :--- |
+| **Sentinel (core)** | `C2WJzwp5XysqRm5PQuM6ZTAeYxxhRyUWf3UJnZjVqMV5` |
+| **sentinel-adaptor (CPI bridge)** | `3qUHHFrm9twoXBSB5te8fy7hvfvdQjgWR36e44QVScto` |
+
+`Anchor.toml` is configured for devnet with these IDs. Deployment targets a **Solana 2.1.x** toolchain and a **Helius devnet RPC** where applicable.
+
+---
+
+## Architecture (Voltr → adaptor → Sentinel)
 
 High-level data path:
 
@@ -51,30 +71,24 @@ Sentinel (ZK core: Groth16, ElGamal, nullifiers, rails)
 ```
 
 - **Voltr Vault**: strategy vault that holds user capital and manages allocations.
-- **sentinel-adaptor**:
-  - Thin Anchor program that exposes `deposit`, `confidential_transfer`, `withdraw` as CPI calls into Sentinel.
-  - No ZK logic; it forwards proofs, commitments, and nullifiers to Sentinel.
-- **Sentinel**:
-  - Core ZK program: Groth16 BN254 verifier, ElGamal encrypted balances, O(1) nullifier registry, institutional rails.
+- **sentinel-adaptor**: thin Anchor program exposing `deposit`, `confidential_transfer`, `withdraw` as CPI into Sentinel (no ZK logic in the adaptor).
+- **Sentinel**: core ZK program — Groth16 BN254 verifier, ElGamal encrypted balances, O(1) nullifier registry, institutional rails.
 
-This architecture keeps compliance and UX at the vault layer (Voltr) while centralizing privacy, proofs, and nullifier logic in a single audited ZK core (Sentinel).
+The **AI layer** sits above the strategy/vault experience (see **AI Layer** below) and complements Voltr-facing flows without replacing on-chain proof verification.
 
 ---
 
-## 3. Devnet deployment
+## Getting started — judges (devnet)
 
-Both programs are deployed on **Solana devnet**:
+1. **Connect a devnet wallet** (Phantom or compatible) to the live app.
+2. **Use the integrated faucet** for **SOL**, **USDC**, and **NORTH** (operational on devnet for demos).
+3. **Exercise the product flow**: **Rail → Vault → Deposit → Transfer → Withdraw** end-to-end against the deployed programs.
 
-- **Sentinel (core)**  
-  - Program ID: `C2WJzwp5XysqRm5PQuM6ZTAeYxxhRyUWf3UJnZjVqMV5`
-- **sentinel-adaptor (CPI bridge)**  
-  - Program ID: `3qUHHFrm9twoXBSB5te8fy7hvfvdQjgWR36e44QVScto`
-
-`Anchor.toml` is configured for devnet with these IDs, and the deployment scripts target a **Solana 2.1.x toolchain** and a **Helius devnet RPC**.
+Judges may pair this with the scripted flows in **How to test** for reproducibility.
 
 ---
 
-## 4. How to test (sentinel-ranger branch)
+## How to test (sentinel-ranger branch)
 
 From the project root:
 
@@ -90,67 +104,62 @@ npm test
 ```
 
 - The suite currently runs **27/27 tests green**:
-  - `tests/sentinel.ts` covers:
-    - rail lifecycle (init, pause, unpause, seal, deactivate),
-    - ZK vault initialization,
-    - handshakes and nullifier registry,
-    - confidential SOL / token flows and multi-asset safety,
-    - institutional authority constraints.
-  - `tests/sentinel-adaptor.ts` proves the **CPI wiring**:
-    - calls `sentinel_adaptor.deposit`,
-    - hits `sentinel::deposit` in the core program,
-    - and exercises Groth16 verification (failing as expected with a mock proof, as in the core Sentinel tests).
+  - `tests/sentinel.ts` covers rail lifecycle, ZK vault, nullifiers, confidential SOL/token flows, and authority constraints.
+  - `tests/sentinel-adaptor.ts` proves **CPI wiring** into the core program and Groth16 verification paths (including expected failure with mock proofs where applicable).
 
 Tests are designed to run against devnet with **minimal SOL funding** to stay within airdrop limits.
 
----
-
-## 5. Live demo
-
-### Run the full ZK flow demo
+### Additional demos
 
 ```bash
 npx ts-node --esm scripts/demo.ts
-```
-
-### Run the backtest (lending vs delta-neutral vs multi-adaptive)
-
-```bash
 npx ts-node --esm scripts/backtest.ts
 ```
 
-### Run the full test suite (27/27)
-
-```bash
-npm test
-```
-
-### Deploy to devnet
+### Deploy to devnet (maintainers)
 
 ```bash
 ./scripts/deploy-devnet.sh
 ```
 
-> Devnet SOL will be provided to judges for live testing.
+> Devnet SOL and faucet assets are available for structured judge testing.
 
 ---
 
-## 6. Strategy and status
+## AI layer (institutional surface)
+
+Four pillars shipped in the product narrative and codebase:
+
+| Pillar | Role |
+| :--- | :--- |
+| **Adaptive yield / risk scoring** | Multi-signal scoring (volatility, funding, liquidity depth) to inform allocation and risk posture. |
+| **Dashboard** | Real-time risk engine widget — score, signals, allocation hints, dynamic severity styling. |
+| **Security monitor** | Surveillance-style signals (e.g. funding rate, liquidity, open interest) with **warning** / **critical** alert levels. |
+| **Compliance (MiCA-ready)** | Wallet and flow checks with **MiCA Ready** surfacing; extensible to institutional screening partners on mainnet. |
+
+---
+
+## Roadmap
+
+| Phase | Scope | Status |
+| :--- | :--- | :---: |
+| **Phase 1** | **Devnet** — deployed programs, live frontend, faucet, AI layer, judge flows | Done |
+| **Phase 2** | **Mainnet** — hardened deployment (post-hackathon, audits & onboarding) | Planned |
+| **Phase 3** | **Governance + $NORTH token** — token launch and on-chain governance aligned with North Architecture | Planned |
+
+Forward path: **devnet → mainnet → governance ($NORTH)**.
+
+---
+
+## Strategy and status
 
 For the **Ranger Earn Build-A-Bear Hackathon**, the positioning is:
 
-- **“Sentinel — Institutional ZK Privacy Vault on Solana”**
-  - Transparent deposits and withdrawals for compliance and reporting.
-  - ZK-encrypted internal strategies (lending vs. delta-neutral) for alpha protection.
-
-- **Hackathon status (devnet)**
-  - Core Sentinel ZK engine is fully implemented and deployed on devnet.
-  - `sentinel-adaptor` is deployed and CPI-tested.
-  - Backtesting, risk engine, and strategy selection logic are implemented in TypeScript.
-
+- **“Sentinel — Institutional ZK Privacy Vault on Solana”** — transparent rails, ZK-encrypted internal strategy.
+- **Hackathon status (devnet)** — core Sentinel ZK engine and **sentinel-adaptor** deployed; backtesting and **AI risk / compliance** surfaces live on the frontend; **IS_DEVNET** bypass active for judge access (see `SECURITY.md`).
 - **Forward-looking statement**
 
-> **Fully operational on devnet with SOL provided to judges for live testing.  
+> **Fully operational on devnet with assets provided via faucet for live testing.  
 > Mainnet deployment and $NORTH token launch planned upon hackathon completion.**
 
 Mainnet deployment will only occur after additional audits and institutional onboarding.

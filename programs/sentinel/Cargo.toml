@@ -1,3 +1,7 @@
+# Sentinel Protocol — North Architecture
+# Copyright (c) 2026 North Architecture. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NorthArchitecture-SIL-1.0
+#
 [package]
 name = "sentinel"
 version = "0.1.0"
@@ -9,6 +13,7 @@ name = "sentinel"
 
 [features]
 default = []
+mainnet = []
 idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 no-entrypoint = []
 cpi = ["no-entrypoint"]

@@ -1,3 +1,6 @@
+# Sentinel Protocol — North Architecture
+# programs.devnet : build sans --features mainnet → check NORTH désactivé (initialize_rail).
+# Build mainnet programme : anchor build -- -p sentinel --features mainnet (voir docs déploiement).
 [toolchain]
 anchor_version = "0.31.1"
 solana_version = "2.1.0"
@@ -12,6 +15,10 @@ sentinel = "C2WJzwp5XysqRm5PQuM6ZTAeYxxhRyUWf3UJnZjVqMV5"
 sentinel_adaptor = "3qUHHFrm9twoXBSB5te8fy7hvfvdQjgWR36e44QVScto"
 
 [programs.devnet]
+sentinel = "C2WJzwp5XysqRm5PQuM6ZTAeYxxhRyUWf3UJnZjVqMV5"
+sentinel_adaptor = "3qUHHFrm9twoXBSB5te8fy7hvfvdQjgWR36e44QVScto"
+
+[programs.mainnet]
 sentinel = "C2WJzwp5XysqRm5PQuM6ZTAeYxxhRyUWf3UJnZjVqMV5"
 sentinel_adaptor = "3qUHHFrm9twoXBSB5te8fy7hvfvdQjgWR36e44QVScto"
 

@@ -411,10 +411,17 @@ pub mod sentinel {
         institution_type: u8,
         compliance_level: u8,
     ) -> Result<()> {
-        require!(
-            ctx.accounts.authority_token_account.amount > 0,
-            SentinelError::InsufficientNorthTokens
-        );
+        #[cfg(not(feature = "mainnet"))]
+        let is_mainnet = false;
+        #[cfg(feature = "mainnet")]
+        let is_mainnet = true;
+
+        if is_mainnet {
+            require!(
+                ctx.accounts.authority_token_account.amount > 0,
+                SentinelError::InsufficientNorthTokens
+            );
+        }
 
         let rail = &mut ctx.accounts.rail;
         let clock = Clock::get()?;

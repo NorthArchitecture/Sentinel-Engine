@@ -11,9 +11,14 @@
  * Strategy engine:
  * - lending allocation (Kamino + Marginfi),
  * - delta-neutral allocation (Drift),
- * - automatic rebalance based on volatility.
+ * - automatic rebalance via multi-signal risk score (volatility, funding, liquidity stress).
  */
 
+import {
+  computeRiskScore,
+  type RiskResult,
+  type RiskSignals,
+} from "../ai/riskScore";
 import {
   checkVolatility,
   type VolatilityScore,
@@ -31,13 +36,6 @@ import {
   depositToMarginfi,
   type MarginfiDepositParams,
 } from "./marginfi";
-
-/**
- * Volatility threshold above which we switch to delta-neutral.
- * 0.15 ~ 15% normalized annualized volatility (interpretation depends
- * on how returns are supplied).
- */
-export const VOLATILITY_THRESHOLD = 0.15;
 
 export type LendingProtocol = "Kamino" | "Marginfi";
 export type DeltaNeutralProtocol = "Drift";
@@ -107,7 +105,7 @@ export interface RebalanceInputs {
   returns: readonly number[];
   /**
    * Optional Drift integration context and configuration.
-   * When provided and volatility exceeds the threshold, the
+   * When provided and risk score exceeds the threshold, the
    * rebalance function will call `openDeltaNeutralPosition`.
    */
   driftContext?: DeltaNeutralContext;
@@ -120,48 +118,110 @@ export interface RebalanceInputs {
   marginfiDepositParams?: MarginfiDepositParams;
 }
 
-export interface RebalanceDecision {
-  volatility: VolatilityScore;
-  threshold: number;
-  allocation: StrategyAllocationPlan;
+/**
+ * Reads a numeric public env var (Next.js / Node). Falls back when unset or invalid.
+ */
+function readEnvNumber(key: string, defaultValue: number): number {
+  if (typeof process === "undefined" || !process.env) {
+    return defaultValue;
+  }
+  const raw = process.env[key];
+  if (raw === undefined || raw === "") {
+    return defaultValue;
+  }
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : defaultValue;
+}
+
+/** Maps raw volatility (std dev of returns) into a 0–1 signal. */
+function normalizeVolatilityToSignal(rawVolatility: VolatilityScore): number {
+  const scaled = rawVolatility / 0.5;
+  return Math.min(1, Math.max(0, scaled));
+}
+
+/** Funding stress proxy from env (scaled into 0–1). */
+function fundingSignalFromEnv(): number {
+  const v = readEnvNumber("NEXT_PUBLIC_FUNDING_RATE_ALERT", 0.001);
+  return Math.min(1, Math.max(0, v * 100));
 }
 
 /**
- * Rebalances the vault based on volatility:
- * - volatility < VOLATILITY_THRESHOLD  → lending (Kamino + Marginfi),
- * - volatility >= VOLATILITY_THRESHOLD → delta-neutral (Drift).
+ * Liquidity / OI stress proxy (0–1). Uses `NEXT_PUBLIC_OI_VARIATION_ALERT` when set.
+ */
+function liquidityStressFromEnv(): number {
+  const oi = readEnvNumber("NEXT_PUBLIC_OI_VARIATION_ALERT", 0.2);
+  return Math.min(1, Math.max(0, oi));
+}
+
+function allocationWeights(plan: StrategyAllocationPlan): {
+  kamino: number;
+  marginfi: number;
+  drift: number;
+} {
+  if (plan.type === "lending") {
+    const k = plan.legs.find((l) => l.protocol === "Kamino")?.weight ?? 0;
+    const m = plan.legs.find((l) => l.protocol === "Marginfi")?.weight ?? 0;
+    return { kamino: k, marginfi: m, drift: 0 };
+  }
+  return { kamino: 0, marginfi: 0, drift: 1 };
+}
+
+export interface RebalanceResult {
+  executed: boolean;
+  riskResult: RiskResult;
+  allocation: {
+    kamino: number;
+    marginfi: number;
+    drift: number;
+  };
+}
+
+/**
+ * Rebalances the vault based on adaptive risk score:
+ * - risk score ≤ threshold → lending (Kamino + Marginfi),
+ * - risk score > threshold → delta-neutral (Drift).
  */
 export async function rebalance(
   inputs: RebalanceInputs,
-): Promise<RebalanceDecision> {
-  const volatility = checkVolatility({ returns: inputs.returns });
+): Promise<RebalanceResult> {
+  const rawVolatility = checkVolatility({ returns: inputs.returns });
+
+  const signals: RiskSignals = {
+    volatility: normalizeVolatilityToSignal(rawVolatility),
+    fundingRate: fundingSignalFromEnv(),
+    liquidityDepth: liquidityStressFromEnv(),
+  };
+
+  const riskResult = computeRiskScore(signals);
+  const threshold = readEnvNumber("NEXT_PUBLIC_RISK_THRESHOLD", 0.6);
 
   let allocation: StrategyAllocationPlan;
+  let executed = false;
 
-  if (volatility < VOLATILITY_THRESHOLD) {
+  if (riskResult.score > threshold) {
+    allocation = allocateDeltaNeutral();
+    if (inputs.driftContext && inputs.driftConfig) {
+      await openDeltaNeutralPosition(inputs.driftContext, inputs.driftConfig);
+      executed = true;
+    }
+  } else {
     allocation = allocateLending(
       inputs.kaminoDepositParams,
       inputs.marginfiDepositParams,
     );
-    // In the low-volatility regime we stay in lending; optionally
-    // execute deposits on Kamino and Marginfi for the provided params.
     if (inputs.kaminoDepositParams) {
       await depositToKamino(inputs.kaminoDepositParams);
+      executed = true;
     }
     if (inputs.marginfiDepositParams) {
       await depositToMarginfi(inputs.marginfiDepositParams);
-    }
-  } else {
-    allocation = allocateDeltaNeutral();
-    if (inputs.driftContext && inputs.driftConfig) {
-      await openDeltaNeutralPosition(inputs.driftContext, inputs.driftConfig);
+      executed = true;
     }
   }
 
   return {
-    volatility,
-    threshold: VOLATILITY_THRESHOLD,
-    allocation,
+    executed,
+    riskResult,
+    allocation: allocationWeights(allocation),
   };
 }
-

@@ -23,4 +23,4 @@ export {
   type DeltaNeutralProtocol,
 } from "./rebalanceCore";
 
-/** Exécution SDK : `import { rebalanceAndExecuteOnChain } from "@repo-src/strategies/rebalanceExecute"`. */
+/** Exécution SDK : `import { rebalanceAndExecuteOnChain } from "./rebalanceExecute"`. */

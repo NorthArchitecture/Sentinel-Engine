@@ -5,19 +5,48 @@
 // ================================================================
 
 use anchor_lang::prelude::*;
+use anchor_lang::AccountDeserialize;
 use sentinel::cpi::accounts::{
-    Deposit as SentinelDeposit,
-    ConfidentialTransfer as SentinelConfidentialTransfer,
+    ConfidentialTransfer as SentinelConfidentialTransfer, Deposit as SentinelDeposit,
     Withdraw as SentinelWithdraw,
 };
 use sentinel::cpi::{
-    deposit as sentinel_deposit,
-    confidential_transfer as sentinel_confidential_transfer,
+    confidential_transfer as sentinel_confidential_transfer, deposit as sentinel_deposit,
     withdraw as sentinel_withdraw,
 };
 use sentinel::program::Sentinel;
+use sentinel::RailState;
 
 declare_id!("3qUHHFrm9twoXBSB5te8fy7hvfvdQjgWR36e44QVScto");
+
+/// Plafond garde-fou : 1000 SOL par opération (lamports).
+const MAX_OPERATION_LAMPORTS: u64 = 1_000_000_000_000;
+
+#[error_code]
+pub enum AdaptorError {
+    #[msg("Amount must be greater than zero")]
+    InvalidAmount,
+    #[msg("Amount exceeds 1000 SOL maximum")]
+    AmountExceedsCap,
+    #[msg("Rail account invalid or corrupt")]
+    InvalidRailAccount,
+    #[msg("Rail is inactive or deactivated")]
+    RailInactive,
+}
+
+fn guard_amount(amount: u64) -> Result<()> {
+    require!(amount > 0, AdaptorError::InvalidAmount);
+    require!(amount <= MAX_OPERATION_LAMPORTS, AdaptorError::AmountExceedsCap);
+    Ok(())
+}
+
+fn require_rail_active(rail: &UncheckedAccount) -> Result<()> {
+    let data = rail.try_borrow_data()?;
+    let mut slice: &[u8] = &data;
+    let state = RailState::try_deserialize(&mut slice).map_err(|_| error!(AdaptorError::InvalidRailAccount))?;
+    require!(state.is_active, AdaptorError::RailInactive);
+    Ok(())
+}
 
 #[program]
 pub mod sentinel_adaptor {
@@ -33,7 +62,8 @@ pub mod sentinel_adaptor {
         nullifier_hash: [u8; 32],
         encrypted_amount: [u8; 64],
     ) -> Result<()> {
-        // TODO: insert vault-specific risk & compliance guards here.
+        guard_amount(amount)?;
+        require_rail_active(&ctx.accounts.rail)?;
 
         let cpi_program = ctx.accounts.sentinel_program.to_account_info();
         let cpi_accounts = SentinelDeposit {
@@ -76,7 +106,9 @@ pub mod sentinel_adaptor {
         new_sender_encrypted_balance: [u8; 64],
         new_receiver_encrypted_balance: [u8; 64],
     ) -> Result<()> {
-        // TODO: insérer ici les gardes de risque & compliance spécifiques au vault.
+        guard_amount(amount)?;
+        require_rail_active(&ctx.accounts.sender_rail)?;
+        require_rail_active(&ctx.accounts.receiver_rail)?;
 
         let cpi_program = ctx.accounts.sentinel_program.to_account_info();
         let cpi_accounts = SentinelConfidentialTransfer {
@@ -122,7 +154,8 @@ pub mod sentinel_adaptor {
         nullifier_hash: [u8; 32],
         new_encrypted_balance: [u8; 64],
     ) -> Result<()> {
-        // TODO: insert vault-specific risk & compliance guards here.
+        guard_amount(amount)?;
+        require_rail_active(&ctx.accounts.rail)?;
 
         let cpi_program = ctx.accounts.sentinel_program.to_account_info();
         let cpi_accounts = SentinelWithdraw {

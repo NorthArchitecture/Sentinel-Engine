@@ -43,6 +43,15 @@ On the `sentinel-ranger` branch, this repository is the hackathon version for th
 | **Frontend (live on Vercel)** | → [https://northarchitecture.io](https://northarchitecture.io) |
 | **GitHub** | [https://github.com/NorthArchitecture/Sentinel-Engine](https://github.com/NorthArchitecture/Sentinel-Engine) |
 
+**Prerequisites for `scripts/demo.ts` (Anchor + devnet RPC):**
+
+```bash
+export ANCHOR_PROVIDER_URL=https://devnet.helius-rpc.com/?api-key=<HELIUS_API_KEY>
+export ANCHOR_WALLET=./ma-cle-pro.json
+```
+
+Then from the repository root: `npx ts-node --esm scripts/demo.ts`
+
 ---
 
 ## Program IDs (devnet)

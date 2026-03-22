@@ -56,6 +56,8 @@ Every movement within a Rail generates a unique, timestamped audit trail.
 * **Transfer Records**: Every confidential transfer creates an on-chain `TransferRecord` with commitment hashes, nullifier, proof hash, and `amount_lamports` (for receiver balance display and auditability).
 * **Token Support**: Full SPL token privacy support with `deposit_token`, `confidential_transfer_token`, and `withdraw_token` — same ZK guarantees for any Solana token.
 
+* **SPL vs sentinel-adaptor (V1):** SPL token flows invoke the **Sentinel program directly** (not via **sentinel-adaptor**). The adaptor currently bridges **SOL** `deposit` / `withdraw` / `confidential_transfer` only. An **adaptor extension for SPL** CPI is **planned post-hackathon** alongside mainnet hardening.
+
 ### $NORTH Token Gate — devnet bypass (`IS_DEVNET`)
 
 * **Production intent:** The **$NORTH** token gate remains **active for mainnet-class configurations** — rails that require NORTH staking or balance thresholds enforce institutional admission in production.

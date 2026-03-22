@@ -2,6 +2,9 @@
  * Sentinel Protocol — North Architecture
  * Copyright (c) 2026 North Architecture. All rights reserved.
  * Ranger Earn Build-A-Bear Hackathon 2026
+ *
+ * Canonical copy for Node/scripts (`rebalanceCore`, tests). The Next.js app duplicates this
+ * logic in `frontend/src/ai/riskScore.ts` so Vercel builds do not depend on repo-root `src/`.
  */
 
 export interface RiskSignals {

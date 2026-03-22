@@ -1,13 +1,8 @@
-// ================================================================
-// Sentinel Protocol — North Architecture
-// Copyright (c) 2026 North Architecture. All rights reserved.
-// SPDX-License-Identifier: LicenseRef-NorthArchitecture-SIL-1.0
-// Repo original : github.com/NorthArchitecture/sentinel-engine
-// Ranger Earn Build-A-Bear Hackathon 2025 — usage limité.
-// Voir LICENSE.md pour conditions complètes.
-// ================================================================
-
 /**
+ * Sentinel Protocol — North Architecture
+ * Copyright (c) 2026 North Architecture. All rights reserved.
+ * Ranger Earn Build-A-Bear Hackathon 2026
+ *
  * Voltr vault lifecycle: initialization via @voltr/vault-sdk,
  * deposit/withdraw via sentinel-adaptor (CPI to Sentinel).
  * No ZK logic here; proofs are provided by the caller.

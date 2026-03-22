@@ -1,13 +1,8 @@
-// ================================================================
-// Sentinel Protocol — North Architecture
-// Copyright (c) 2026 North Architecture. All rights reserved.
-// SPDX-License-Identifier: LicenseRef-NorthArchitecture-SIL-1.0
-// Original repo: github.com/NorthArchitecture/sentinel-engine
-// Ranger Earn Build-A-Bear Hackathon 2025 — limited use.
-// See LICENSE.md for full terms.
-// ================================================================
-
 /**
+ * Sentinel Protocol — North Architecture
+ * Copyright (c) 2026 North Architecture. All rights reserved.
+ * Ranger Earn Build-A-Bear Hackathon 2026
+ *
  * Sentinel risk engine:
  * - max drawdown with circuit breaker,
  * - volatility score (used for lending vs delta-neutral routing).

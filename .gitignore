@@ -15,6 +15,9 @@ circom/
 circuits/node_modules/
 circuits/package-lock.json
 
+# Accidental "flag" files (mangled shell / Solana CLI can create `--keypair`, `--url`, etc.)
+**/--*
+
 # Security - private keys
 ma-cle-pro.json
 *.keypair.json

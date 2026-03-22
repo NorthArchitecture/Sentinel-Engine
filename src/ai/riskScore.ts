@@ -5,13 +5,17 @@
  */
 
 export interface RiskSignals {
-  volatility: number; // 0 à 1
-  fundingRate: number; // 0 à 1
-  liquidityDepth: number; // 0 à 1 (faible liquidité = risque élevé)
+  /** Normalized 0–1 */
+  volatility: number;
+  /** Normalized 0–1 */
+  fundingRate: number;
+  /** Normalized 0–1 (low depth = higher risk) */
+  liquidityDepth: number;
 }
 
 export interface RiskResult {
-  score: number; // 0 à 1
+  /** Normalized 0–1 */
+  score: number;
   level: "low" | "medium" | "high";
   signals: RiskSignals;
 }

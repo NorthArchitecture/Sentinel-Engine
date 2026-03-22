@@ -40,7 +40,7 @@ On the `sentinel-ranger` branch, this repository is the hackathon version for th
 
 | Resource | Link |
 | :--- | :--- |
-| **Frontend (live)** | [https://silent-rails.vercel.app](https://silent-rails.vercel.app) |
+| **Frontend (live on Vercel)** | → [https://northarchitecture.io](https://northarchitecture.io) |
 | **GitHub** | [https://github.com/NorthArchitecture/Sentinel-Engine](https://github.com/NorthArchitecture/Sentinel-Engine) |
 
 ---
@@ -90,37 +90,12 @@ Judges may pair this with the scripted flows in **How to test** for reproducibil
 
 ## How to test (sentinel-ranger branch)
 
-From the project root:
+From the repository root: `npm install` → `npm run anchor:build` → `npm test`. The suite currently runs **27/27 tests green**:
 
-```bash
-# Install dependencies
-npm install
+- `tests/sentinel.ts` — rail lifecycle, ZK vault, nullifiers, confidential SOL/token flows, authority constraints.
+- `tests/sentinel-adaptor.ts` — **CPI wiring** into the core program and Groth16 paths (including expected failures with mock proofs where applicable).
 
-# Build Anchor programs (Sentinel + sentinel-adaptor)
-npm run anchor:build
-
-# Run the full TypeScript test suite
-npm test
-```
-
-- The suite currently runs **27/27 tests green**:
-  - `tests/sentinel.ts` covers rail lifecycle, ZK vault, nullifiers, confidential SOL/token flows, and authority constraints.
-  - `tests/sentinel-adaptor.ts` proves **CPI wiring** into the core program and Groth16 verification paths (including expected failure with mock proofs where applicable).
-
-Tests are designed to run against devnet with **minimal SOL funding** to stay within airdrop limits.
-
-### Additional demos
-
-```bash
-npx ts-node --esm scripts/demo.ts
-npx ts-node --esm scripts/backtest.ts
-```
-
-### Deploy to devnet (maintainers)
-
-```bash
-./scripts/deploy-devnet.sh
-```
+Tests are designed for devnet with **minimal SOL funding** (airdrop limits).
 
 > Devnet SOL and faucet assets are available for structured judge testing.
 

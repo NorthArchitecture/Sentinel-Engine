@@ -94,7 +94,7 @@ export function checkCircuitBreaker(
 /**
  * Inputs required to compute a volatility score.
  * Returns must be normalized (e.g. log-returns),
- * derived from on-chain prices (Pyth, Drift, etc.).
+ * derived from on-chain or oracle-backed prices (e.g. Pyth).
  */
 export interface VolatilityInputs {
   /**

@@ -17,23 +17,15 @@ export async function rebalanceAndExecuteOnChain(
   let executed = base.executed;
   const txSignatures = [...base.txSignatures];
 
-  if (base.chosenStrategy === "delta-neutral") {
-    if (inputs.driftContext && inputs.driftConfig) {
-      const { openDeltaNeutralPosition } = await import("./drift");
-      await openDeltaNeutralPosition(inputs.driftContext, inputs.driftConfig);
-      executed = true;
-    }
-  } else {
-    if (inputs.kaminoDepositParams) {
-      const { depositToKamino } = await import("./kamino");
-      await depositToKamino(inputs.kaminoDepositParams);
-      executed = true;
-    }
-    if (inputs.marginfiDepositParams) {
-      const { depositToMarginfi } = await import("./marginfi");
-      await depositToMarginfi(inputs.marginfiDepositParams);
-      executed = true;
-    }
+  if (inputs.kaminoDepositParams) {
+    const { depositToKamino } = await import("./kamino");
+    await depositToKamino(inputs.kaminoDepositParams);
+    executed = true;
+  }
+  if (inputs.marginfiDepositParams) {
+    const { depositToMarginfi } = await import("./marginfi");
+    await depositToMarginfi(inputs.marginfiDepositParams);
+    executed = true;
   }
 
   return {

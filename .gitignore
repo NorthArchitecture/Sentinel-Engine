@@ -29,15 +29,18 @@ id/
 .env.local
 deploy-devnet.mjs
 
-# Frontend (separate project)
+# Frontend & scripts (local / separate tracking)
 frontend/
-landing/
 scripts/
 .cursorrules
+
+# Landing (optional separate deploy)
+landing/
 solana-install-init-*
 
-# OS
+# OS / Finder
 .DS_Store
+._*
 
 # Test artifacts
 test-ledger/

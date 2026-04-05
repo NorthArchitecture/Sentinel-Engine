@@ -30,7 +30,11 @@ Deposits stay **transparent**. Strategies stay **invisible**.
 
 Sentinel is an **institutional-grade ZK privacy vault** on Solana: transparent deposits and withdrawals for regulators and auditors, **confidential internal strategy** (vault-to-vault flows encrypted and proven on-chain with **Groth16**), and institutional rails (KYC’d rails, governance controls, MiCA-ready auditability).
 
-The stack now includes a full **AI layer**: **adaptive risk scoring**, a **dashboard widget** for live risk intelligence, a **security monitor** (funding, liquidity, open interest), and **MiCA-oriented compliance** surfacing — aligned with institutional operations and judge-facing demos on devnet.
+The stack now includes a full **AI layer**: **adaptive risk scoring**, a **dashboard widget** for live risk intelligence, a **security monitor** (volatility + on-chain Kamino/Marginfi APY stress), and **MiCA-oriented compliance** surfacing — aligned with institutional operations and judge-facing demos on devnet.
+
+**Per-asset vaults:** strategy integration is structured as **isolated vault surfaces** — a **SOL** vault and a **USDC** vault — each with its own Kamino and Marginfi adapters (`src/vaults/`). There is **no cross-asset commingling** in those adapters.
+
+> **Note (Ranger hackathon):** Drift / delta-neutral integration has been **removed** from this branch following updated hackathon scope; allocation remains **Kamino + Marginfi** with a **50/50** default split, while the **AI risk engine** stays a **single shared feed** for all vaults.
 
 On the `sentinel-ranger` branch, this repository is the hackathon version for the **Ranger Earn Build-A-Bear** submission.
 
@@ -82,6 +86,7 @@ Sentinel (ZK core: Groth16, ElGamal, nullifiers, rails)
 - **Voltr Vault**: strategy vault that holds user capital and manages allocations.
 - **sentinel-adaptor**: thin Anchor program exposing `deposit`, `confidential_transfer`, `withdraw` as CPI into Sentinel (no ZK logic in the adaptor).
 - **Sentinel**: core ZK program — Groth16 BN254 verifier, ElGamal encrypted balances, O(1) nullifier registry, institutional rails.
+- **Yield routing (off-chain SDK helpers)**: `src/vaults/` isolates **SOL** vs **USDC** — each asset has dedicated **Kamino** and **Marginfi** wrappers; lending allocation default is **50/50** between venues.
 
 The **AI layer** sits above the strategy/vault experience (see **AI Layer** below) and complements Voltr-facing flows without replacing on-chain proof verification.
 
@@ -116,9 +121,9 @@ Four pillars shipped in the product narrative and codebase:
 
 | Pillar | Role |
 | :--- | :--- |
-| **Adaptive yield / risk scoring** | Multi-signal scoring (volatility, funding, liquidity depth) to inform allocation and risk posture. |
+| **Adaptive yield / risk scoring** | Multi-signal scoring (CoinGecko volatility + normalized on-chain Kamino/Marginfi APY stress and venue spread) to inform risk posture. |
 | **Dashboard** | Real-time risk engine widget — score, signals, allocation hints, dynamic severity styling. |
-| **Security monitor** | Surveillance-style signals (e.g. funding rate, liquidity, open interest) with **warning** / **critical** alert levels. |
+| **Security monitor** | Alerts on volatility and on-chain lending stress (shared `/api/risk-signals` feed) with **warning** / **critical** levels. |
 | **Compliance (MiCA-ready)** | Wallet and flow checks with **MiCA Ready** surfacing; extensible to institutional screening partners on mainnet. |
 
 ---

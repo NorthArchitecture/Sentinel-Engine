@@ -189,10 +189,9 @@ The **AI layer** sits above Voltr in the operator and end-user experience: it in
 
 | Market condition | Protocol | APY (est.) |
 |------------------|----------|------------|
-| Low volatility &lt; 0.15 | Kamino + Marginfi | 12–15% |
-| High volatility ≥ 0.15 | Drift delta-neutral | 18–24% |
+| All regimes (lending-only) | Kamino + Marginfi (50/50 default) | ~10–15% |
 
-Signals are combined via **adaptive multi-signal scoring** (see `STRATEGY.md`).
+Signals are combined via **adaptive multi-signal scoring** — volatility from CoinGecko, lending stress from on-chain Kamino/Marginfi APY (see `STRATEGY.md`). There is **no** perps or external venue beyond these two lending protocols in this branch.
 
 ### Devnet deployment (21 March 2026)
 

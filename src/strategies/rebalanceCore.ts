@@ -3,7 +3,8 @@
  * Copyright (c) 2026 North Architecture. All rights reserved.
  * Ranger Earn Build-A-Bear Hackathon 2026
  *
- * Décision de rebalance (sans exécution on-chain SDK) — importable par le frontend Next.
+ * Décision de rebalance (sans exécution on-chain SDK) — lending Kamino/Marginfi 50/50 uniquement.
+ * Signaux : CoinGecko (vol) + APY on-chain Kamino/Marginfi (`fetchUnifiedLendingRiskSignals`).
  */
 
 import {
@@ -11,20 +12,11 @@ import {
   type RiskResult,
   type RiskSignals,
 } from "../ai/riskScore";
-import { checkVolatility, type VolatilityScore } from "../risk/engine";
-import {
-  fetchFundingRate,
-  fetchLiquidityDepth,
-} from "../lib/driftMarketSignals";
-import type {
-  DeltaNeutralContext,
-  DeltaNeutralConfig,
-} from "./drift";
+import { fetchUnifiedLendingRiskSignals } from "../lib/lendingRiskSignals";
 import type { KaminoDepositParams } from "./kamino";
 import type { MarginfiDepositParams } from "./marginfi";
 
 export type LendingProtocol = "Kamino" | "Marginfi";
-export type DeltaNeutralProtocol = "Drift";
 
 export interface LendingLeg {
   protocol: LendingProtocol;
@@ -36,20 +28,11 @@ export interface LendingAllocationPlan {
   legs: readonly LendingLeg[];
 }
 
-export interface DeltaNeutralAllocationPlan {
-  type: "delta-neutral";
-  protocol: DeltaNeutralProtocol;
-  targetLeverage: number;
-}
-
-export type StrategyAllocationPlan =
-  | LendingAllocationPlan
-  | DeltaNeutralAllocationPlan;
+export type StrategyAllocationPlan = LendingAllocationPlan;
 
 export interface RebalanceInputs {
-  returns: readonly number[];
-  driftContext?: DeltaNeutralContext;
-  driftConfig?: DeltaNeutralConfig;
+  /** Conservé pour compatibilité appelants ; le score utilise la chaîne CoinGecko + APY. */
+  returns?: readonly number[];
   kaminoDepositParams?: KaminoDepositParams;
   marginfiDepositParams?: MarginfiDepositParams;
 }
@@ -66,36 +49,9 @@ function readEnvNumber(key: string, defaultValue: number): number {
   return Number.isFinite(n) ? n : defaultValue;
 }
 
-/** USD de profondeur au-delà duquel le stress de liquidité est faible (0–1). */
-const LIQUIDITY_USD_REFERENCE = 800_000;
-
-function normalizeVolatilityToSignal(rawVolatility: VolatilityScore): number {
-  const scaled = rawVolatility / 0.5;
-  return Math.min(1, Math.max(0, scaled));
-}
-
-/**
- * Taux de funding brut (décimal) → composante 0–1 pour le score composite.
- */
-function fundingDecimalToSignal(decimalRate: number): number {
-  return Math.min(1, Math.max(0, Math.abs(decimalRate) * 100));
-}
-
-/**
- * Somme notionnelle USD (L2) → signal 0–1 (plus le carnet est profond, plus le stress est bas).
- * Aligné sur l’usage historique où une valeur élevée augmente le score : ici on mappe le *stress* liquidité.
- */
-function liquidityUsdToCompositeSignal(usdNotional: number): number {
-  if (!Number.isFinite(usdNotional) || usdNotional <= 0) {
-    return 1;
-  }
-  const depthScore = Math.min(1, usdNotional / LIQUIDITY_USD_REFERENCE);
-  return Math.min(1, Math.max(0, 1 - depthScore * 0.85));
-}
-
 export interface LastRebalanceDecision {
-  strategy: "lending" | "delta-neutral";
-  /** Volatilité normalisée (0–1) utilisée dans le score. */
+  strategy: "lending";
+  /** Volatilité normalisée (0–1) du dernier score. */
   volatility: number;
   timestamp: number;
 }
@@ -107,7 +63,7 @@ export function getLastRebalanceDecision(): LastRebalanceDecision | null {
 }
 
 /**
- * Plan lending 50/50 — détails marché gérés en couche basse.
+ * Plan lending 50/50 — répartition par défaut entre Kamino et Marginfi.
  */
 export function allocateLending(
   _kaminoParams?: KaminoDepositParams,
@@ -120,25 +76,13 @@ export function allocateLending(
   return { type: "lending", legs };
 }
 
-export function allocateDeltaNeutral(): DeltaNeutralAllocationPlan {
-  return {
-    type: "delta-neutral",
-    protocol: "Drift",
-    targetLeverage: 1.0,
-  };
-}
-
-function allocationWeights(plan: StrategyAllocationPlan): {
+function allocationWeights(plan: LendingAllocationPlan): {
   kamino: number;
   marginfi: number;
-  drift: number;
 } {
-  if (plan.type === "lending") {
-    const k = plan.legs.find((l) => l.protocol === "Kamino")?.weight ?? 0;
-    const m = plan.legs.find((l) => l.protocol === "Marginfi")?.weight ?? 0;
-    return { kamino: k, marginfi: m, drift: 0 };
-  }
-  return { kamino: 0, marginfi: 0, drift: 1 };
+  const k = plan.legs.find((l) => l.protocol === "Kamino")?.weight ?? 0;
+  const m = plan.legs.find((l) => l.protocol === "Marginfi")?.weight ?? 0;
+  return { kamino: k, marginfi: m };
 }
 
 export interface RebalanceResult {
@@ -147,60 +91,43 @@ export interface RebalanceResult {
   allocation: {
     kamino: number;
     marginfi: number;
-    drift: number;
   };
-  chosenStrategy: "lending" | "delta-neutral";
+  chosenStrategy: "lending";
   /** Résumé lisible (volatilité + score + seuil). */
   rationale: string;
   txSignatures: readonly string[];
 }
 
 /**
- * Rebalance décisionnel : funding & liquidité via Drift (mêmes fetchers que le Security Monitor).
- * Pas d’envoi de transaction sauf si une couche d’exécution distincte branche les SDK.
+ * Rebalance décisionnel : score multi-signal (vol CoinGecko + APY lending).
+ * Allocation toujours lending 50/50 Kamino/Marginfi — pas de delta-neutral.
  */
 export async function rebalance(
   inputs: RebalanceInputs,
 ): Promise<RebalanceResult> {
-  const rawVolatility = checkVolatility({ returns: inputs.returns });
-  const volSignal = normalizeVolatilityToSignal(rawVolatility);
-
-  const [fundingDecimal, liquidityUsd] = await Promise.all([
-    fetchFundingRate(),
-    fetchLiquidityDepth(),
-  ]);
-
+  const unified = await fetchUnifiedLendingRiskSignals();
   const signals: RiskSignals = {
-    volatility: volSignal,
-    fundingRate: fundingDecimalToSignal(fundingDecimal),
-    liquidityDepth: liquidityUsdToCompositeSignal(liquidityUsd),
+    volatility: unified.volatility,
+    fundingRate: unified.fundingRate,
+    liquidityDepth: unified.liquidityDepth,
   };
 
   const riskResult = computeRiskScore(signals);
   const threshold = readEnvNumber("NEXT_PUBLIC_RISK_THRESHOLD", 0.6);
 
-  let allocation: StrategyAllocationPlan;
-  let chosenStrategy: "lending" | "delta-neutral";
-
-  if (riskResult.score > threshold) {
-    allocation = allocateDeltaNeutral();
-    chosenStrategy = "delta-neutral";
-  } else {
-    allocation = allocateLending(
-      inputs.kaminoDepositParams,
-      inputs.marginfiDepositParams,
-    );
-    chosenStrategy = "lending";
-  }
+  const allocation = allocateLending(
+    inputs.kaminoDepositParams,
+    inputs.marginfiDepositParams,
+  );
 
   const rationale =
-    chosenStrategy === "lending"
-      ? `Risk score ${riskResult.score.toFixed(3)} ≤ threshold ${threshold.toFixed(2)} — lending (Kamino + Marginfi). Volatility signal ${volSignal.toFixed(3)} (from return series); funding & L2 depth from live Drift feeds.`
-      : `Risk score ${riskResult.score.toFixed(3)} > threshold ${threshold.toFixed(2)} — delta-neutral (Drift). Volatility signal ${volSignal.toFixed(3)} (from return series); elevated composite risk.`;
+    riskResult.score > threshold
+      ? `Risk score ${riskResult.score.toFixed(3)} > threshold ${threshold.toFixed(2)} — posture défensive (lending 50/50 Kamino/Marginfi). Vol ${unified.volatility.toFixed(3)} ; APY/cluster lending via signaux on-chain.`
+      : `Risk score ${riskResult.score.toFixed(3)} ≤ threshold ${threshold.toFixed(2)} — lending 50/50 Kamino/Marginfi. Vol ${unified.volatility.toFixed(3)} ; APY/cluster lending via signaux on-chain.`;
 
   lastRebalanceDecision = {
-    strategy: chosenStrategy,
-    volatility: volSignal,
+    strategy: "lending",
+    volatility: unified.volatility,
     timestamp: Date.now(),
   };
 
@@ -208,7 +135,7 @@ export async function rebalance(
     executed: false,
     riskResult,
     allocation: allocationWeights(allocation),
-    chosenStrategy,
+    chosenStrategy: "lending",
     rationale,
     txSignatures: [],
   };

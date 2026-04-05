@@ -82,8 +82,7 @@ All of this is **composable**: Sentinel exposes a CPI-ready interface so a Voltr
 
 ## Tracks
 
-- **Main Track ($500K)**: Institutional ZK privacy vault — transparent compliance rails, confidential internal flows, multi-adaptive yield with AI risk intelligence.
-- **Drift Side Track ($100K)**: Delta-neutral integration with Drift for volatile regimes.
+- **Main Track ($500K)**: Institutional ZK privacy vault — transparent compliance rails, confidential internal flows, multi-adaptive yield with AI risk intelligence (Kamino + Marginfi lending only; isolated SOL/USDC vault surfaces).
 
 ---
 

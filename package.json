@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.31.1",
-    "@drift-labs/sdk": "^2.158.0-beta.3",
     "@kamino-finance/klend-sdk": "^7.3.20",
     "@mrgnlabs/marginfi-client-v2": "^6.4.1",
     "@solana/spl-token": "^0.4.14",

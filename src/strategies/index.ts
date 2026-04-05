@@ -4,23 +4,20 @@
  * Ranger Earn Build-A-Bear Hackathon 2026
  *
  * Strategy engine — décision de rebalance (`rebalanceCore`) et allocations.
- * Pour une exécution on-chain (Kamino / Marginfi / Drift SDK), voir `rebalanceExecute.ts`.
+ * Pour une exécution on-chain (Kamino / Marginfi SDK), voir `rebalanceExecute.ts`.
  */
 
 export {
   rebalance,
   getLastRebalanceDecision,
   allocateLending,
-  allocateDeltaNeutral,
   type LastRebalanceDecision,
   type RebalanceResult,
   type RebalanceInputs,
   type LendingLeg,
   type LendingAllocationPlan,
-  type DeltaNeutralAllocationPlan,
   type StrategyAllocationPlan,
   type LendingProtocol,
-  type DeltaNeutralProtocol,
 } from "./rebalanceCore";
 
 /** Exécution SDK : `import { rebalanceAndExecuteOnChain } from "./rebalanceExecute"`. */

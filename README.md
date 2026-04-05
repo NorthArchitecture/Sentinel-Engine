@@ -18,7 +18,7 @@ See LICENSE.md for full terms.
 ![Security](https://img.shields.io/badge/Security-Audit--Seal-green)
 ![ZK](https://img.shields.io/badge/ZK-Groth16--bn128-purple)
 ![License](https://img.shields.io/badge/License-SIL%201.0-lightgrey)
-![Tests](https://img.shields.io/badge/tests-27%2F27-brightgreen)
+![Tests](https://img.shields.io/badge/tests-29%2F29-brightgreen)
 
 # Sentinel — Institutional ZK Privacy Vault on Solana
 
@@ -60,7 +60,7 @@ Then from the repository root: `npx ts-node --esm scripts/demo.ts`
 
 ## Program IDs (devnet)
 
-Both programs are deployed on **Solana devnet** (state as of **21 March 2026**):
+Both programs are deployed on **Solana devnet** (state as of **5 April 2026**):
 
 | Program | Program ID |
 | :--- | :--- |
@@ -104,7 +104,7 @@ Judges may pair this with the scripted flows in **How to test** for reproducibil
 
 ## How to test (sentinel-ranger branch)
 
-From the repository root: `npm install` → `npm run anchor:build` → `npm test`. The suite currently runs **27/27 tests green**:
+From the repository root: `npm install` → `anchor build` → `npm test`. The suite currently runs **29/29 tests green**:
 
 - `tests/sentinel.ts` — rail lifecycle, ZK vault, nullifiers, confidential SOL/token flows, authority constraints.
 - `tests/sentinel-adaptor.ts` — **CPI wiring** into the core program and Groth16 paths (including expected failures with mock proofs where applicable).

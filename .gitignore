@@ -29,10 +29,13 @@ id/
 .env.local
 deploy-devnet.mjs
 
-# Frontend & scripts (local / separate tracking)
+# Frontend & Cursor rules (local / separate tracking)
 frontend/
-scripts/
 .cursorrules
+
+# Scripts: ignorer tout sauf demo.ts (versionné pour les juges)
+scripts/*
+!scripts/demo.ts
 
 # Landing (optional separate deploy)
 landing/
